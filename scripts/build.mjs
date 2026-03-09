@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 
 const root = process.cwd();
 const srcDir = path.join(root, 'src');
@@ -226,6 +227,17 @@ function normalizeName(name) {
   return String(name).trim().toLowerCase();
 }
 
+function parseBool(value) {
+  const text = String(value || '')
+    .trim()
+    .toLowerCase();
+  return ['1', 'true', 'yes', 'y', 'on'].includes(text);
+}
+
+function hashPassword(text) {
+  return createHash('sha256').update(String(text)).digest('hex');
+}
+
 function buildPosts() {
   const files = fs.readdirSync(postsDir).filter((f) => f.endsWith('.md'));
   const posts = [];
@@ -242,6 +254,10 @@ function buildPosts() {
     const html = markdownToHtml(parsed.body);
     const authorNames = parseAuthorNames(parsed.meta);
     const background = parsed.meta.background || parsed.meta.bg || '';
+    const hidden = parseBool(parsed.meta.hidden || parsed.meta.hide || parsed.meta.private);
+    const lockEnabled = parseBool(parsed.meta.lock || parsed.meta.locked);
+    const rawPassword = parsed.meta.password || parsed.meta.lockPassword || parsed.meta.passcode || '';
+    const lockHash = lockEnabled && rawPassword ? hashPassword(rawPassword) : '';
 
     posts.push({
       title,
@@ -255,7 +271,9 @@ function buildPosts() {
       authorNames,
       authors: [],
       authorText: authorNames.join(' / '),
-      background
+      background,
+      hidden,
+      lockHash
     });
   }
 
@@ -372,8 +390,8 @@ function buildSite(posts, authors) {
   const layout = read(path.join(srcDir, 'templates', 'layout.html'));
   const postTpl = read(path.join(srcDir, 'templates', 'post.html'));
   const year = new Date().getFullYear();
-
-  const postList = posts.map((post) => renderPostCard(post, true)).join('');
+  const publicPosts = posts.filter((post) => !post.hidden);
+  const postList = publicPosts.map((post) => renderPostCard(post, true)).join('');
 
   const indexContent = `<section class="hero">
     <h1>简约个人网站</h1>
@@ -419,7 +437,7 @@ function buildSite(posts, authors) {
 
   const authorCards = authors
     .map((author) => {
-      const count = posts.filter((post) => post.authors.some((item) => item.slug === author.slug)).length;
+      const count = publicPosts.filter((post) => post.authors.some((item) => item.slug === author.slug)).length;
       return `<li class="author-card">
         <h2 class="author-name"><a class="author-link" href="/authors/${escapeHtml(author.slug)}/">${escapeHtml(author.name)}</a></h2>
         ${author.headline ? `<p class="meta">${escapeHtml(author.headline)}</p>` : ''}
@@ -444,7 +462,7 @@ function buildSite(posts, authors) {
   );
 
   for (const author of authors) {
-    const authoredPosts = posts.filter((post) => post.authors.some((item) => item.slug === author.slug));
+    const authoredPosts = publicPosts.filter((post) => post.authors.some((item) => item.slug === author.slug));
     const authoredList = authoredPosts.length
       ? `<ul class="post-list">${authoredPosts.map((post) => renderPostCard(post, true)).join('')}</ul>`
       : '<p class="meta">这个作者还没有发布文章。</p>';
@@ -475,7 +493,7 @@ function buildSite(posts, authors) {
     );
   }
 
-  const grouped = posts.reduce((acc, post) => {
+  const grouped = publicPosts.reduce((acc, post) => {
     const key = post.category;
     acc[key] = acc[key] || [];
     acc[key].push(post);
@@ -587,10 +605,96 @@ function buildSite(posts, authors) {
   );
 
   for (const post of posts) {
+    const isLocked = Boolean(post.lockHash);
+    const lockPanel = isLocked
+      ? `<section class="post-lock" data-post-lock data-lock-hash="${post.lockHash}" data-post-key="${escapeHtml(post.slug)}">
+      <p class="meta">这篇文章已上锁，请输入密码后查看全文。</p>
+      <div class="post-lock-form">
+        <input class="post-lock-input" type="password" autocomplete="current-password" placeholder="输入阅读密码" />
+        <button class="post-lock-btn" type="button">解锁</button>
+      </div>
+      <p class="post-lock-msg" aria-live="polite"></p>
+    </section>`
+      : '';
+    const lockScript = isLocked
+      ? `<script>
+      (() => {
+        const lockRoot = document.querySelector('[data-post-lock]');
+        if (!lockRoot) return;
+        const content = document.querySelector('.markdown-body.is-locked');
+        if (!content) return;
+        const input = lockRoot.querySelector('.post-lock-input');
+        const button = lockRoot.querySelector('.post-lock-btn');
+        const message = lockRoot.querySelector('.post-lock-msg');
+        const expectedHash = lockRoot.dataset.lockHash || '';
+        const postKey = lockRoot.dataset.postKey || '';
+        const sessionKey = 'post-unlocked:' + postKey;
+
+        const toHex = (buffer) =>
+          Array.from(new Uint8Array(buffer))
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+
+        const unlockView = () => {
+          content.classList.remove('is-locked');
+          lockRoot.classList.add('is-unlocked');
+          if (message) message.textContent = '已解锁。';
+          if (sessionKey) sessionStorage.setItem(sessionKey, '1');
+        };
+
+        const hashText = async (text) => {
+          const data = new TextEncoder().encode(text);
+          const digest = await crypto.subtle.digest('SHA-256', data);
+          return toHex(digest);
+        };
+
+        const handleUnlock = async () => {
+          if (!input || !message) return;
+          const password = input.value.trim();
+          if (!password) {
+            message.textContent = '请输入密码。';
+            return;
+          }
+          button.disabled = true;
+          try {
+            const actualHash = await hashText(password);
+            if (actualHash === expectedHash) {
+              unlockView();
+            } else {
+              message.textContent = '密码错误，请重试。';
+            }
+          } catch (error) {
+            message.textContent = '解锁失败，请稍后再试。';
+          } finally {
+            button.disabled = false;
+          }
+        };
+
+        if (sessionKey && sessionStorage.getItem(sessionKey) === '1') {
+          unlockView();
+          return;
+        }
+
+        button.addEventListener('click', () => {
+          handleUnlock();
+        });
+        input.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            handleUnlock();
+          }
+        });
+      })();
+    </script>`
+      : '';
+
     const content = template(postTpl, {
       title: escapeHtml(post.title),
-      metaHtml: renderPostMeta(post),
-      content: post.html
+      metaHtml: isLocked ? `作者：${renderAuthorLinks(post.authors)}` : renderPostMeta(post),
+      lockPanel,
+      contentClass: isLocked ? 'is-locked' : '',
+      content: post.html,
+      lockScript
     });
 
     const html = renderLayoutPage(
@@ -624,7 +728,7 @@ function buildSite(posts, authors) {
   write(
     path.join(distDir, 'assets', 'posts.json'),
     JSON.stringify(
-      posts.map((post) => ({
+      publicPosts.map((post) => ({
         title: post.title,
         slug: post.slug,
         date: post.date,
@@ -635,7 +739,7 @@ function buildSite(posts, authors) {
         category: post.category,
         cover: post.cover,
         summary: post.summary,
-        contentText: post.contentText
+        contentText: post.lockHash ? '' : post.contentText
       })),
       null,
       2

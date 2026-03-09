@@ -41,6 +41,9 @@ author: 你的名字
 category: 分类名
 cover: /images/cover-hello.svg
 background: /images/cover-build.svg
+hidden: false
+locked: false
+# password: your-password
 summary: 摘要（可选）
 ---
 
@@ -51,6 +54,8 @@ summary: 摘要（可选）
 
 - `author` 与 `authors` 二选一即可；`authors` 可用中英文逗号分隔多个作者。
 - `background` 可选，支持单篇文章独立背景图。
+- `hidden: true` 时，文章不会出现在首页/分类/搜索/作者页列表，只能通过直链访问。
+- `locked: true` 且设置 `password` 后，文章默认只显示标题和作者，输入密码后可查看正文。
 
 ## 新增作者资料
 

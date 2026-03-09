@@ -2,5 +2,7 @@
   <a class="home-btn" href="/">← 返回主页</a>
   <p class="meta post-meta">{{metaHtml}}</p>
   <h1>{{title}}</h1>
-  <section class="markdown-body">{{content}}</section>
+  {{lockPanel}}
+  <section class="markdown-body {{contentClass}}">{{content}}</section>
+  {{lockScript}}
 </article>

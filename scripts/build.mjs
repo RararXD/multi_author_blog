@@ -5,6 +5,7 @@ const root = process.cwd();
 const srcDir = path.join(root, 'src');
 const contentDir = path.join(root, 'content');
 const postsDir = path.join(contentDir, 'posts');
+const authorsDir = path.join(contentDir, 'authors');
 const imagesDir = path.join(contentDir, 'images');
 const distDir = path.join(root, 'dist');
 
@@ -39,7 +40,7 @@ function copyDirRecursive(src, target) {
 }
 
 function escapeHtml(str) {
-  return str
+  return String(str)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -48,7 +49,7 @@ function escapeHtml(str) {
 }
 
 function slugify(input) {
-  return input
+  return String(input)
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\u4e00-\u9fa5]+/gi, '-')
@@ -171,6 +172,29 @@ function coverImage(url, cls, alt) {
   return `<img class="${cls}" src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" loading="lazy" />`;
 }
 
+function excerpt(text, length = 120) {
+  const trimmed = String(text).replace(/\s+/g, ' ').trim();
+  if (trimmed.length <= length) return trimmed;
+  return `${trimmed.slice(0, length)}...`;
+}
+
+function parseAuthorNames(meta) {
+  const raw = [meta.authors, meta.author].filter(Boolean).join(',');
+  const split = raw
+    .split(/[,，;；|/]/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const unique = [];
+  for (const name of split) {
+    if (!unique.includes(name)) unique.push(name);
+  }
+  return unique.length ? unique : ['Anonymous'];
+}
+
+function normalizeName(name) {
+  return String(name).trim().toLowerCase();
+}
+
 function buildPosts() {
   const files = fs.readdirSync(postsDir).filter((f) => f.endsWith('.md'));
   const posts = [];
@@ -181,22 +205,24 @@ function buildPosts() {
     const title = parsed.meta.title || path.basename(file, '.md');
     const slug = slugify(path.basename(file, '.md'));
     const date = parsed.meta.date || '1970-01-01';
-    const author = parsed.meta.author || 'Anonymous';
     const category = parsed.meta.category || 'Uncategorized';
     const cover = parsed.meta.cover || '';
-    const summary = parsed.meta.summary || parsed.body.slice(0, 100).replace(/\n/g, ' ');
+    const summary = parsed.meta.summary || excerpt(parsed.body, 100);
     const html = markdownToHtml(parsed.body);
+    const authorNames = parseAuthorNames(parsed.meta);
 
     posts.push({
       title,
       slug,
       date,
-      author,
       category,
       cover,
       summary,
       html,
-      contentText: parsed.body
+      contentText: parsed.body,
+      authorNames,
+      authors: [],
+      authorText: authorNames.join(' / ')
     });
   }
 
@@ -204,23 +230,114 @@ function buildPosts() {
   return posts;
 }
 
-function buildSite(posts) {
+function buildAuthorProfiles() {
+  if (!fs.existsSync(authorsDir)) return [];
+
+  const files = fs.readdirSync(authorsDir).filter((f) => f.endsWith('.md'));
+  return files.map((file) => {
+    const abs = path.join(authorsDir, file);
+    const parsed = parseFrontMatter(read(abs));
+    const fallbackName = path.basename(file, '.md');
+    const name = parsed.meta.name || fallbackName;
+    const slug = parsed.meta.slug || slugify(name) || slugify(fallbackName) || 'author';
+    const headline = parsed.meta.headline || '';
+    const summary = parsed.meta.summary || excerpt(parsed.body, 90) || `${name} 的介绍`;
+    const bioHtml = markdownToHtml(parsed.body || `关于 ${name} 的介绍暂未补充。`);
+
+    return {
+      name,
+      slug,
+      headline,
+      summary,
+      bioHtml
+    };
+  });
+}
+
+function linkAuthors(posts, profileList) {
+  const map = new Map();
+  const authors = [];
+  const usedSlugs = new Set();
+
+  const uniqueSlug = (raw) => {
+    const base = slugify(raw) || 'author';
+    if (!usedSlugs.has(base)) {
+      usedSlugs.add(base);
+      return base;
+    }
+    let n = 2;
+    while (usedSlugs.has(`${base}-${n}`)) {
+      n += 1;
+    }
+    const finalSlug = `${base}-${n}`;
+    usedSlugs.add(finalSlug);
+    return finalSlug;
+  };
+
+  for (const profile of profileList) {
+    const key = normalizeName(profile.name);
+    if (map.has(key)) continue;
+    const author = {
+      ...profile,
+      slug: uniqueSlug(profile.slug)
+    };
+    map.set(key, author);
+    authors.push(author);
+  }
+
+  for (const post of posts) {
+    const resolved = [];
+    for (const name of post.authorNames) {
+      const key = normalizeName(name);
+      let author = map.get(key);
+      if (!author) {
+        author = {
+          name,
+          slug: uniqueSlug(name),
+          headline: '',
+          summary: `${name} 的介绍暂未补充。`,
+          bioHtml: `<p>${escapeHtml(name)} 的介绍暂未补充。</p>`
+        };
+        map.set(key, author);
+        authors.push(author);
+      }
+      resolved.push(author);
+    }
+    post.authors = resolved;
+    post.authorText = resolved.map((a) => a.name).join(' / ');
+  }
+
+  authors.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  return authors;
+}
+
+function renderAuthorLinks(authors) {
+  return authors
+    .map((author) => `<a class="author-link" href="/authors/${escapeHtml(author.slug)}/">${escapeHtml(author.name)}</a>`)
+    .join('<span class="meta-sep">/</span>');
+}
+
+function renderPostMeta(post) {
+  return `${escapeHtml(post.date)} · ${renderAuthorLinks(post.authors)} <span class="tag">${escapeHtml(post.category)}</span>`;
+}
+
+function renderPostCard(post, includeSummary = true) {
+  return `<li class="post-card" data-href="/posts/${post.slug}/" role="link" tabindex="0">
+    ${coverImage(post.cover, 'post-cover', `${post.title} cover`)}
+    <div class="post-main">
+      <p class="meta post-meta">${renderPostMeta(post)}</p>
+      <h2 class="post-card-title">${escapeHtml(post.title)}</h2>
+      ${includeSummary ? `<p>${escapeHtml(post.summary)}</p>` : ''}
+    </div>
+  </li>`;
+}
+
+function buildSite(posts, authors) {
   const layout = read(path.join(srcDir, 'templates', 'layout.html'));
   const postTpl = read(path.join(srcDir, 'templates', 'post.html'));
   const year = new Date().getFullYear();
 
-  const postList = posts
-    .map(
-      (p) => `<li class="post-card" data-href="/posts/${p.slug}/" role="link" tabindex="0">
-        ${coverImage(p.cover, 'post-cover', `${p.title} cover`)}
-        <div class="post-main">
-          <p class="meta">${escapeHtml(p.date)} · ${escapeHtml(p.author)} <span class="tag">${escapeHtml(p.category)}</span></p>
-          <h2 class="post-card-title">${escapeHtml(p.title)}</h2>
-          <p>${escapeHtml(p.summary)}</p>
-        </div>
-      </li>`
-    )
-    .join('');
+  const postList = posts.map((post) => renderPostCard(post, true)).join('');
 
   const indexContent = `<section class="hero">
     <h1>简约个人网站</h1>
@@ -256,6 +373,56 @@ function buildSite(posts) {
     })
   );
 
+  const authorCards = authors
+    .map((author) => {
+      const count = posts.filter((post) => post.authors.some((item) => item.slug === author.slug)).length;
+      return `<li class="author-card">
+        <h2 class="author-name"><a class="author-link" href="/authors/${escapeHtml(author.slug)}/">${escapeHtml(author.name)}</a></h2>
+        ${author.headline ? `<p class="meta">${escapeHtml(author.headline)}</p>` : ''}
+        <p>${escapeHtml(author.summary)}</p>
+        <p class="meta">文章数：${count}</p>
+      </li>`;
+    })
+    .join('');
+
+  write(
+    path.join(distDir, 'authors', 'index.html'),
+    template(layout, {
+      title: 'Authors | MyNotes',
+      description: 'Author profile list',
+      content: `<section class="hero"><h1>Authors</h1><p class="meta">作者列表与简介</p></section><ul class="author-grid">${authorCards}</ul>`,
+      year
+    })
+  );
+
+  for (const author of authors) {
+    const authoredPosts = posts.filter((post) => post.authors.some((item) => item.slug === author.slug));
+    const authoredList = authoredPosts.length
+      ? `<ul class="post-list">${authoredPosts.map((post) => renderPostCard(post, true)).join('')}</ul>`
+      : '<p class="meta">这个作者还没有发布文章。</p>';
+
+    const authorContent = `<section class="author-detail-header">
+      <a class="home-btn" href="/authors/">← 返回作者列表</a>
+      <h1>${escapeHtml(author.name)}</h1>
+      ${author.headline ? `<p class="meta">${escapeHtml(author.headline)}</p>` : ''}
+      <section class="markdown-body">${author.bioHtml}</section>
+    </section>
+    <section>
+      <h2>文章</h2>
+      ${authoredList}
+    </section>`;
+
+    write(
+      path.join(distDir, 'authors', author.slug, 'index.html'),
+      template(layout, {
+        title: `${escapeHtml(author.name)} | MyNotes`,
+        description: escapeHtml(author.summary),
+        content: authorContent,
+        year
+      })
+    );
+  }
+
   const grouped = posts.reduce((acc, post) => {
     const key = post.category;
     acc[key] = acc[key] || [];
@@ -265,17 +432,7 @@ function buildSite(posts) {
 
   const categoryBlocks = Object.entries(grouped)
     .map(([cat, items]) => {
-      const links = items
-        .map(
-          (p) => `<li class="post-card" data-href="/posts/${p.slug}/" role="link" tabindex="0">
-            ${coverImage(p.cover, 'post-cover', `${p.title} cover`)}
-            <div class="post-main">
-              <p class="meta">${escapeHtml(p.date)} · ${escapeHtml(p.author)} <span class="tag">${escapeHtml(p.category)}</span></p>
-              <h2 class="post-card-title">${escapeHtml(p.title)}</h2>
-            </div>
-          </li>`
-        )
-        .join('');
+      const links = items.map((post) => renderPostCard(post, false)).join('');
       return `<section><h2>${escapeHtml(cat)}</h2><ul class="post-list">${links}</ul></section>`;
     })
     .join('');
@@ -302,18 +459,37 @@ function buildSite(posts) {
     const q = document.getElementById('q');
     const result = document.getElementById('result');
 
+    function esc(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function renderAuthorLinks(authors) {
+      return authors
+        .map((author) => '<a class="author-link" href="/authors/' + esc(author.slug) + '/">' + esc(author.name) + '</a>')
+        .join('<span class="meta-sep">/</span>');
+    }
+
+    function renderMeta(post) {
+      return esc(post.date) + ' · ' + renderAuthorLinks(post.authors) + ' <span class="tag">' + esc(post.category) + '</span>';
+    }
+
     async function load() {
       const res = await fetch('/assets/posts.json');
       const posts = await res.json();
 
       const render = (list) => {
-        result.innerHTML = list.map((p) =>
-          '<li class=\"post-card\" data-href=\"/posts/' + p.slug + '/\" role=\"link\" tabindex=\"0\">' +
-            (p.cover ? '<img class=\"post-cover\" src=\"' + p.cover + '\" alt=\"' + p.title + ' cover\" loading=\"lazy\" />' : '') +
-            '<div class=\"post-main\">' +
-              '<p class=\"meta\">' + p.date + ' · ' + p.author + ' <span class=\"tag\">' + p.category + '</span></p>' +
-              '<h2 class=\"post-card-title\">' + p.title + '</h2>' +
-              '<p>' + p.summary + '</p>' +
+        result.innerHTML = list.map((post) =>
+          '<li class="post-card" data-href="/posts/' + post.slug + '/" role="link" tabindex="0">' +
+            (post.cover ? '<img class="post-cover" src="' + esc(post.cover) + '" alt="' + esc(post.title) + ' cover" loading="lazy" />' : '') +
+            '<div class="post-main">' +
+              '<p class="meta post-meta">' + renderMeta(post) + '</p>' +
+              '<h2 class="post-card-title">' + esc(post.title) + '</h2>' +
+              '<p>' + esc(post.summary) + '</p>' +
             '</div>' +
           '</li>'
         ).join('');
@@ -328,8 +504,9 @@ function buildSite(posts) {
           return;
         }
 
-        const filtered = posts.filter((p) => {
-          const text = (p.title + ' ' + p.author + ' ' + p.category + ' ' + p.contentText).toLowerCase();
+        const filtered = posts.filter((post) => {
+          const authorText = post.authors.map((item) => item.name).join(' ');
+          const text = (post.title + ' ' + authorText + ' ' + post.category + ' ' + post.contentText).toLowerCase();
           return text.includes(keyword);
         });
         render(filtered);
@@ -352,9 +529,7 @@ function buildSite(posts) {
   for (const post of posts) {
     const content = template(postTpl, {
       title: escapeHtml(post.title),
-      date: escapeHtml(post.date),
-      author: escapeHtml(post.author),
-      category: escapeHtml(post.category),
+      metaHtml: renderPostMeta(post),
       content: post.html
     });
 
@@ -381,15 +556,18 @@ function buildSite(posts) {
   write(
     path.join(distDir, 'assets', 'posts.json'),
     JSON.stringify(
-      posts.map((p) => ({
-        title: p.title,
-        slug: p.slug,
-        date: p.date,
-        author: p.author,
-        category: p.category,
-        cover: p.cover,
-        summary: p.summary,
-        contentText: p.contentText
+      posts.map((post) => ({
+        title: post.title,
+        slug: post.slug,
+        date: post.date,
+        authors: post.authors.map((author) => ({
+          name: author.name,
+          slug: author.slug
+        })),
+        category: post.category,
+        cover: post.cover,
+        summary: post.summary,
+        contentText: post.contentText
       })),
       null,
       2
@@ -419,7 +597,10 @@ ensureDir(distDir);
 copyAssets();
 copyStatic();
 copyImages();
-const posts = buildPosts();
-buildSite(posts);
 
-console.log(`Built ${posts.length} posts into dist/.`);
+const posts = buildPosts();
+const authorProfiles = buildAuthorProfiles();
+const authors = linkAuthors(posts, authorProfiles);
+buildSite(posts, authors);
+
+console.log(`Built ${posts.length} posts and ${authors.length} authors into dist/.`);

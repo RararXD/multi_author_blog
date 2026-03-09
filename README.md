@@ -16,6 +16,7 @@
 
 ```text
 content/posts/          # 文章单文件（Markdown）
+content/images/         # 网站与文章图片（封面、logo等）
 src/templates/          # 页面模板
 src/assets/             # 样式
 src/static/             # 静态配置文件（如 _redirects）
@@ -33,12 +34,14 @@ title: 文章标题
 date: 2026-03-09
 author: 你的名字
 category: 分类名
-cover: https://example.com/cover.jpg
+cover: /images/cover-hello.svg
 summary: 摘要（可选）
 ---
 
 这里写正文。
 ```
+
+图片文件放在 `content/images/`，构建后会自动复制到 `dist/images/`。
 
 然后执行：
 

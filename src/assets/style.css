@@ -41,16 +41,35 @@ body {
   padding: 24px 0;
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--text);
   text-decoration: none;
 }
+.brand-mark-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  display: inline-grid;
+  place-items: center;
+}
+.brand-mark {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
 nav a {
   margin-left: 16px;
   color: var(--muted);
   text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.16s ease, border-color 0.16s ease;
 }
 .theme-toggle {
   margin-left: 16px;
@@ -65,15 +84,22 @@ nav a:hover,
 a:hover {
   color: var(--accent);
 }
+nav a:hover {
+  border-color: var(--accent);
+}
 .container {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 24px;
   margin-bottom: 28px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04);
 }
 .hero h1 {
   margin: 0 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--line);
+  display: inline-block;
 }
 .hero {
   min-height: 132px;

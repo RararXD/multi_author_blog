@@ -5,6 +5,7 @@ const root = process.cwd();
 const srcDir = path.join(root, 'src');
 const contentDir = path.join(root, 'content');
 const postsDir = path.join(contentDir, 'posts');
+const imagesDir = path.join(contentDir, 'images');
 const distDir = path.join(root, 'dist');
 
 function ensureDir(dir) {
@@ -409,10 +410,16 @@ function copyStatic() {
   copyDirRecursive(src, distDir);
 }
 
+function copyImages() {
+  if (!fs.existsSync(imagesDir)) return;
+  copyDirRecursive(imagesDir, path.join(distDir, 'images'));
+}
+
 removeDir(distDir);
 ensureDir(distDir);
 copyAssets();
 copyStatic();
+copyImages();
 const posts = buildPosts();
 buildSite(posts);
 

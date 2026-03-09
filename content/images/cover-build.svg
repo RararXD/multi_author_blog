@@ -1,0 +1,12 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1200" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8995B6"/>
+      <stop offset="1" stop-color="#E0D7C8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#g2)"/>
+  <rect x="200" y="220" width="750" height="160" rx="18" fill="#F4EFE5" opacity="0.92"/>
+  <text x="245" y="320" fill="#5D4F3C" font-size="78" font-family="Palatino, serif">WORKFLOW</text>
+  <line x1="245" y1="360" x2="880" y2="360" stroke="#8B7A66" stroke-width="6"/>
+</svg>

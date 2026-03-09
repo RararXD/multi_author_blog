@@ -10,6 +10,8 @@
   --bg-gradient: radial-gradient(circle at top left, #fffdf7 0%, #f3efe6 60%, #ece6d9 100%);
   --card-shadow: 0 12px 24px rgba(40, 34, 24, 0.08);
   --soft-shadow: 0 4px 12px rgba(40, 34, 24, 0.06);
+  --page-bg-opacity: 0.24;
+  --page-bg-brightness: 1.08;
 }
 /* Theme tokens (dark mode overrides) */
 [data-theme="dark"] {
@@ -23,6 +25,8 @@
   --bg-gradient: radial-gradient(circle at top left, #252d35 0%, #1b2229 58%, #151a1f 100%);
   --card-shadow: 0 14px 26px rgba(5, 8, 10, 0.35);
   --soft-shadow: 0 6px 14px rgba(5, 8, 10, 0.25);
+  --page-bg-opacity: 0.16;
+  --page-bg-brightness: 0.72;
 }
 /* Global reset and base document styles */
 * {
@@ -35,6 +39,23 @@ body {
   color: var(--text);
   line-height: 1.7;
   position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* Optional per-page background image layer */
+body.with-page-bg::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: var(--page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--page-bg-opacity);
+  filter: brightness(var(--page-bg-brightness));
+  pointer-events: none;
+  z-index: -2;
 }
 /* Subtle decorative background glow */
 body::before {
@@ -54,6 +75,7 @@ body::before {
 .container {
   width: min(900px, 92vw);
   margin: 0 auto;
+  transition: opacity 0.56s ease;
 }
 /* Header and brand */
 .site-header {
@@ -61,6 +83,7 @@ body::before {
   justify-content: space-between;
   align-items: center;
   padding: 26px 0 20px;
+  animation: page-fade-in 0.68s ease both;
 }
 .brand {
   display: inline-flex;
@@ -91,8 +114,15 @@ body::before {
   display: block;
 }
 /* Top navigation and theme toggle */
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
 nav a {
-  margin-left: 16px;
+  margin-left: 0;
   color: var(--muted);
   text-decoration: none;
   border: 1px solid transparent;
@@ -101,7 +131,7 @@ nav a {
   transition: color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
 }
 .theme-toggle {
-  margin-left: 16px;
+  margin-left: 0;
   border: 1px solid var(--line);
   color: var(--text);
   background: transparent;
@@ -128,8 +158,10 @@ nav a:hover {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 28px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
   box-shadow: var(--card-shadow);
+  flex: 1;
+  animation: page-fade-in 0.68s ease both;
 }
 .hero h1 {
   margin: 0 0 8px;
@@ -199,12 +231,14 @@ nav a:hover {
   line-height: 1.3;
   color: var(--text);
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 .post-list li:hover .post-card-title {
   color: var(--title-hover);
 }
 .post-list p {
   margin: 6px 0;
+  overflow-wrap: anywhere;
 }
 /* Post cover and content areas */
 .post-cover {
@@ -303,6 +337,13 @@ nav a:hover {
   padding-bottom: 28px;
   color: var(--muted);
   font-size: 0.92rem;
+  margin-top: auto;
+  animation: page-fade-in 0.68s ease both;
+}
+body.is-leaving .site-header,
+body.is-leaving .container,
+body.is-leaving .site-footer {
+  opacity: 0.55;
 }
 .home-btn {
   display: inline-block;
@@ -355,6 +396,7 @@ nav a:hover {
 }
 .author-card p {
   margin: 8px 0 0;
+  overflow-wrap: anywhere;
 }
 .author-detail-header h1 {
   margin-bottom: 4px;
@@ -391,6 +433,47 @@ nav a:hover {
     transform: rotate(360deg);
   }
 }
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header,
+  .container,
+  .site-footer {
+    animation: none;
+    transition: none;
+  }
+  body.is-leaving .site-header,
+  body.is-leaving .container,
+  body.is-leaving .site-footer {
+    opacity: 1;
+  }
+}
+/* Responsive layout for narrow desktop/tablet */
+@media (max-width: 980px) {
+  .site-header {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  nav {
+    justify-content: flex-start;
+  }
+  .post-list li {
+    grid-template-columns: minmax(130px, 180px) minmax(0, 1fr);
+    column-gap: 12px;
+  }
+  .post-cover {
+    grid-column: 1;
+  }
+  .post-main {
+    grid-column: 2;
+  }
+}
 /* Responsive layout for mobile */
 @media (max-width: 640px) {
   .site-header {
@@ -413,11 +496,14 @@ nav a:hover {
   .post-main {
     grid-column: auto;
   }
-  nav a {
-    margin-left: 0;
-    margin-right: 12px;
+  nav {
+    width: 100%;
+    justify-content: flex-start;
   }
-  .theme-toggle {
-    margin-left: 0;
+  nav a {
+    margin-right: 0;
+  }
+  .author-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -4,6 +4,7 @@ date: 2026-03-09
 author: cyqnew
 category: 日常
 cover: /images/cover-hello.svg
+background: /images/cover-hello.svg
 summary: 这是站点的示例文章，展示如何用单文件写入标题、时间、作者和正文。
 ---
 

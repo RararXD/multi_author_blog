@@ -4,6 +4,7 @@ date: 2026-03-08
 author: cyqnew
 category: 技术
 cover: /images/cover-build.svg
+background: /images/cover-build.svg
 summary: 记录这个站点的日常写作流程与部署方式。
 ---
 

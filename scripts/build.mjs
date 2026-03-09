@@ -8,6 +8,14 @@ const postsDir = path.join(contentDir, 'posts');
 const authorsDir = path.join(contentDir, 'authors');
 const imagesDir = path.join(contentDir, 'images');
 const distDir = path.join(root, 'dist');
+const pageBackgrounds = {
+  home: '',
+  about: '/images/cover-build.svg',
+  authors: '/images/cover-hello.svg',
+  categories: '/images/cover-build.svg',
+  search: '/images/cover-hello.svg',
+  notFound: '/images/cover-build.svg'
+};
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -172,6 +180,29 @@ function coverImage(url, cls, alt) {
   return `<img class="${cls}" src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" loading="lazy" />`;
 }
 
+function buildBodyAttrs(backgroundImage) {
+  const raw = String(backgroundImage || '').trim();
+  if (!raw) {
+    return {
+      bodyClass: '',
+      bodyStyle: ''
+    };
+  }
+
+  const cssUrl = `url("${raw.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`;
+  return {
+    bodyClass: 'with-page-bg',
+    bodyStyle: `--page-bg-image: ${escapeHtml(cssUrl)};`
+  };
+}
+
+function renderLayoutPage(layout, pageVars, backgroundImage = '') {
+  return template(layout, {
+    ...pageVars,
+    ...buildBodyAttrs(backgroundImage)
+  });
+}
+
 function excerpt(text, length = 120) {
   const trimmed = String(text).replace(/\s+/g, ' ').trim();
   if (trimmed.length <= length) return trimmed;
@@ -210,6 +241,7 @@ function buildPosts() {
     const summary = parsed.meta.summary || excerpt(parsed.body, 100);
     const html = markdownToHtml(parsed.body);
     const authorNames = parseAuthorNames(parsed.meta);
+    const background = parsed.meta.background || parsed.meta.bg || '';
 
     posts.push({
       title,
@@ -222,7 +254,8 @@ function buildPosts() {
       contentText: parsed.body,
       authorNames,
       authors: [],
-      authorText: authorNames.join(' / ')
+      authorText: authorNames.join(' / '),
+      background
     });
   }
 
@@ -243,13 +276,15 @@ function buildAuthorProfiles() {
     const headline = parsed.meta.headline || '';
     const summary = parsed.meta.summary || excerpt(parsed.body, 90) || `${name} 的介绍`;
     const bioHtml = markdownToHtml(parsed.body || `关于 ${name} 的介绍暂未补充。`);
+    const background = parsed.meta.background || parsed.meta.bg || '';
 
     return {
       name,
       slug,
       headline,
       summary,
-      bioHtml
+      bioHtml,
+      background
     };
   });
 }
@@ -296,7 +331,8 @@ function linkAuthors(posts, profileList) {
           slug: uniqueSlug(name),
           headline: '',
           summary: `${name} 的介绍暂未补充。`,
-          bioHtml: `<p>${escapeHtml(name)} 的介绍暂未补充。</p>`
+          bioHtml: `<p>${escapeHtml(name)} 的介绍暂未补充。</p>`,
+          background: ''
         };
         map.set(key, author);
         authors.push(author);
@@ -346,12 +382,16 @@ function buildSite(posts, authors) {
   </section>
   <ul class="post-list">${postList}</ul>`;
 
-  const indexHtml = template(layout, {
-    title: 'Home | MyNotes',
-    description: 'A minimal personal static website.',
-    content: indexContent,
-    year
-  });
+  const indexHtml = renderLayoutPage(
+    layout,
+    {
+      title: 'Home | MyNotes',
+      description: 'A minimal personal static website.',
+      content: indexContent,
+      year
+    },
+    pageBackgrounds.home
+  );
   write(path.join(distDir, 'index.html'), indexHtml);
 
   const aboutContent = `<section class="hero">
@@ -365,12 +405,16 @@ function buildSite(posts, authors) {
 
   write(
     path.join(distDir, 'about', 'index.html'),
-    template(layout, {
-      title: 'About | MyNotes',
-      description: 'About this personal website.',
-      content: aboutContent,
-      year
-    })
+    renderLayoutPage(
+      layout,
+      {
+        title: 'About | MyNotes',
+        description: 'About this personal website.',
+        content: aboutContent,
+        year
+      },
+      pageBackgrounds.about
+    )
   );
 
   const authorCards = authors
@@ -387,12 +431,16 @@ function buildSite(posts, authors) {
 
   write(
     path.join(distDir, 'authors', 'index.html'),
-    template(layout, {
-      title: 'Authors | MyNotes',
-      description: 'Author profile list',
-      content: `<section class="hero"><h1>Authors</h1><p class="meta">作者列表与简介</p></section><ul class="author-grid">${authorCards}</ul>`,
-      year
-    })
+    renderLayoutPage(
+      layout,
+      {
+        title: 'Authors | MyNotes',
+        description: 'Author profile list',
+        content: `<section class="hero"><h1>Authors</h1><p class="meta">作者列表与简介</p></section><ul class="author-grid">${authorCards}</ul>`,
+        year
+      },
+      pageBackgrounds.authors
+    )
   );
 
   for (const author of authors) {
@@ -414,12 +462,16 @@ function buildSite(posts, authors) {
 
     write(
       path.join(distDir, 'authors', author.slug, 'index.html'),
-      template(layout, {
-        title: `${escapeHtml(author.name)} | MyNotes`,
-        description: escapeHtml(author.summary),
-        content: authorContent,
-        year
-      })
+      renderLayoutPage(
+        layout,
+        {
+          title: `${escapeHtml(author.name)} | MyNotes`,
+          description: escapeHtml(author.summary),
+          content: authorContent,
+          year
+        },
+        author.background
+      )
     );
   }
 
@@ -439,12 +491,16 @@ function buildSite(posts, authors) {
 
   write(
     path.join(distDir, 'categories', 'index.html'),
-    template(layout, {
-      title: 'Category | MyNotes',
-      description: 'Post categories',
-      content: `<section class="hero"><h1>Category</h1><p class="meta">按分类浏览文章</p></section><div class="category-page">${categoryBlocks}</div>`,
-      year
-    })
+    renderLayoutPage(
+      layout,
+      {
+        title: 'Category | MyNotes',
+        description: 'Post categories',
+        content: `<section class="hero"><h1>Category</h1><p class="meta">按分类浏览文章</p></section><div class="category-page">${categoryBlocks}</div>`,
+        year
+      },
+      pageBackgrounds.categories
+    )
   );
 
   const searchContent = `<section class="hero">
@@ -518,12 +574,16 @@ function buildSite(posts, authors) {
 
   write(
     path.join(distDir, 'search', 'index.html'),
-    template(layout, {
-      title: 'Search | MyNotes',
-      description: 'Search posts',
-      content: searchContent,
-      year
-    })
+    renderLayoutPage(
+      layout,
+      {
+        title: 'Search | MyNotes',
+        description: 'Search posts',
+        content: searchContent,
+        year
+      },
+      pageBackgrounds.search
+    )
   );
 
   for (const post of posts) {
@@ -533,24 +593,32 @@ function buildSite(posts, authors) {
       content: post.html
     });
 
-    const html = template(layout, {
-      title: `${escapeHtml(post.title)} | MyNotes`,
-      description: escapeHtml(post.summary),
-      content,
-      year
-    });
+    const html = renderLayoutPage(
+      layout,
+      {
+        title: `${escapeHtml(post.title)} | MyNotes`,
+        description: escapeHtml(post.summary),
+        content,
+        year
+      },
+      post.background
+    );
 
     write(path.join(distDir, 'posts', post.slug, 'index.html'), html);
   }
 
   write(
     path.join(distDir, '404.html'),
-    template(layout, {
-      title: '404 | MyNotes',
-      description: 'Page not found',
-      content: '<h1>404</h1><p>页面不存在，返回 <a href="/">首页</a>。</p>',
-      year
-    })
+    renderLayoutPage(
+      layout,
+      {
+        title: '404 | MyNotes',
+        description: 'Page not found',
+        content: '<h1>404</h1><p>页面不存在，返回 <a href="/">首页</a>。</p>',
+        year
+      },
+      pageBackgrounds.notFound
+    )
   );
 
   write(

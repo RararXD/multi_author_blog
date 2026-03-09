@@ -1,30 +1,30 @@
 /* Theme tokens (light mode defaults) */
 :root {
-  --bg: #edf3ff;
-  --panel: #f8fbff;
-  --text: #0f1c34;
-  --muted: #51617f;
-  --line: #c4d4ee;
-  --accent: #1f5da8;
-  --title-hover: #184b89;
-  --bg-gradient: radial-gradient(circle at top left, #fafdff 0%, #e8f0ff 58%, #d7e5ff 100%);
-  --card-shadow: 0 12px 24px rgba(16, 36, 72, 0.12);
-  --soft-shadow: 0 4px 12px rgba(16, 36, 72, 0.09);
+  --bg: #ece6d8;
+  --panel: #f6f1e5;
+  --text: #2f2a22;
+  --muted: #766b59;
+  --line: #cdc1ad;
+  --accent: #7d6c4e;
+  --title-hover: #65583f;
+  --bg-gradient: radial-gradient(circle at top left, #faf6ed 0%, #e8decd 58%, #d6c9b3 100%);
+  --card-shadow: 0 12px 24px rgba(49, 40, 28, 0.12);
+  --soft-shadow: 0 4px 12px rgba(49, 40, 28, 0.09);
   --page-bg-opacity: 0.24;
   --page-bg-brightness: 1.04;
 }
 /* Theme tokens (dark mode overrides) */
 [data-theme="dark"] {
-  --bg: #070d18;
-  --panel: #0f1726;
-  --text: #e6efff;
-  --muted: #9cb3d7;
-  --line: #2a3d5f;
-  --accent: #60a5ff;
-  --title-hover: #90c2ff;
-  --bg-gradient: radial-gradient(circle at top left, #13243f 0%, #0d172a 58%, #070d18 100%);
-  --card-shadow: 0 14px 26px rgba(3, 8, 16, 0.52);
-  --soft-shadow: 0 6px 14px rgba(3, 8, 16, 0.4);
+  --bg: #10161f;
+  --panel: #18212d;
+  --text: #e7ebf3;
+  --muted: #9ba8bd;
+  --line: #33465f;
+  --accent: #7ea8df;
+  --title-hover: #a6c3ea;
+  --bg-gradient: radial-gradient(circle at top left, #243346 0%, #172230 58%, #10161f 100%);
+  --card-shadow: 0 14px 26px rgba(3, 7, 12, 0.5);
+  --soft-shadow: 0 6px 14px rgba(3, 7, 12, 0.38);
   --page-bg-opacity: 0.14;
   --page-bg-brightness: 0.74;
 }

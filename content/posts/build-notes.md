@@ -1,7 +1,7 @@
 ---
 title: 写作与发布流程
 date: 2026-03-08
-author: cyqnew
+author: demo-author
 category: 技术
 cover: /images/cover-build.svg
 background: /images/cover-build.svg

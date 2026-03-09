@@ -1,7 +1,7 @@
 ---
 title: 我的第一篇文章
 date: 2026-03-09
-author: cyqnew
+author: demo-author
 category: 日常
 cover: /images/cover-hello.svg
 background: /images/cover-hello.svg

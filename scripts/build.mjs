@@ -211,11 +211,11 @@ function buildSite(posts) {
 
   const postList = posts
     .map(
-      (p) => `<li>
+      (p) => `<li class="post-card" data-href="/posts/${p.slug}/" role="link" tabindex="0">
         ${coverImage(p.cover, 'post-cover', `${p.title} cover`)}
         <div class="post-main">
           <p class="meta">${escapeHtml(p.date)} · ${escapeHtml(p.author)} <span class="tag">${escapeHtml(p.category)}</span></p>
-          <h2 class="post-card-title"><a href="/posts/${p.slug}/">${escapeHtml(p.title)}</a></h2>
+          <h2 class="post-card-title">${escapeHtml(p.title)}</h2>
           <p>${escapeHtml(p.summary)}</p>
         </div>
       </li>`
@@ -267,11 +267,11 @@ function buildSite(posts) {
     .map(([cat, items]) => {
       const links = items
         .map(
-          (p) => `<li>
+          (p) => `<li class="post-card" data-href="/posts/${p.slug}/" role="link" tabindex="0">
             ${coverImage(p.cover, 'post-cover', `${p.title} cover`)}
             <div class="post-main">
               <p class="meta">${escapeHtml(p.date)} · ${escapeHtml(p.author)} <span class="tag">${escapeHtml(p.category)}</span></p>
-              <h2 class="post-card-title"><a href="/posts/${p.slug}/">${escapeHtml(p.title)}</a></h2>
+              <h2 class="post-card-title">${escapeHtml(p.title)}</h2>
             </div>
           </li>`
         )
@@ -308,11 +308,11 @@ function buildSite(posts) {
 
       const render = (list) => {
         result.innerHTML = list.map((p) =>
-          '<li>' +
+          '<li class=\"post-card\" data-href=\"/posts/' + p.slug + '/\" role=\"link\" tabindex=\"0\">' +
             (p.cover ? '<img class=\"post-cover\" src=\"' + p.cover + '\" alt=\"' + p.title + ' cover\" loading=\"lazy\" />' : '') +
             '<div class=\"post-main\">' +
               '<p class=\"meta\">' + p.date + ' · ' + p.author + ' <span class=\"tag\">' + p.category + '</span></p>' +
-              '<h2 class=\"post-card-title\"><a href=\"/posts/' + p.slug + '/\">' + p.title + '</a></h2>' +
+              '<h2 class=\"post-card-title\">' + p.title + '</h2>' +
               '<p>' + p.summary + '</p>' +
             '</div>' +
           '</li>'
@@ -355,7 +355,6 @@ function buildSite(posts) {
       date: escapeHtml(post.date),
       author: escapeHtml(post.author),
       category: escapeHtml(post.category),
-      cover: coverImage(post.cover, 'post-detail-cover', `${post.title} cover`),
       content: post.html
     });
 

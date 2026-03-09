@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}}</title>
+    <meta name="description" content="{{description}}" />
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
+    <div id="page-loader" class="page-loader" aria-hidden="true">
+      <div class="spinner"></div>
+    </div>
+    <header class="site-header">
+      <a class="brand" href="/">MyNotes</a>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/about/">About</a>
+        <a href="/categories/">Category</a>
+        <a href="/search/">Search</a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换主题">Auto</button>
+      </nav>
+    </header>
+    <main class="container">{{content}}</main>
+    <footer class="site-footer">© {{year}} MyNotes</footer>
+    <script>
+      (() => {
+        const loader = document.getElementById('page-loader');
+        const themeToggle = document.getElementById('theme-toggle');
+        let loaderTimer = null;
+
+        const getAutoTheme = () => {
+          const hour = new Date().getHours();
+          return hour >= 7 && hour < 19 ? 'light' : 'dark';
+        };
+
+        const applyTheme = (mode) => {
+          const theme = mode === 'auto' ? getAutoTheme() : mode;
+          document.documentElement.setAttribute('data-theme', theme);
+          if (themeToggle) {
+            themeToggle.textContent = mode === 'auto' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light';
+          }
+        };
+
+        const savedMode = localStorage.getItem('theme-mode') || 'auto';
+        applyTheme(savedMode);
+
+        if (themeToggle) {
+          themeToggle.addEventListener('click', () => {
+            const current = localStorage.getItem('theme-mode') || 'auto';
+            const next = current === 'auto' ? 'light' : current === 'light' ? 'dark' : 'auto';
+            localStorage.setItem('theme-mode', next);
+            applyTheme(next);
+          });
+        }
+
+        const showLoader = () => {
+          loader.classList.add('show');
+        };
+
+        const hideLoader = () => {
+          loader.classList.remove('show');
+          if (loaderTimer) {
+            clearTimeout(loaderTimer);
+            loaderTimer = null;
+          }
+        };
+
+        window.addEventListener('pageshow', hideLoader);
+        window.addEventListener('load', hideLoader);
+
+        document.addEventListener('click', (event) => {
+          const link = event.target.closest('a');
+          if (!link) return;
+          if (link.target === '_blank' || link.hasAttribute('download')) return;
+          const url = new URL(link.href, window.location.origin);
+          if (url.origin !== window.location.origin) return;
+          if (url.pathname === window.location.pathname && url.hash) return;
+
+          loaderTimer = setTimeout(showLoader, 120);
+        });
+      })();
+    </script>
+  </body>
+</html>

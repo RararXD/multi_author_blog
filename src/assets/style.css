@@ -1,30 +1,30 @@
 /* Theme tokens (light mode defaults) */
 :root {
-  --bg: #efe7da;
-  --panel: #f8f2e7;
-  --text: #2f2519;
-  --muted: #786651;
-  --line: #ccbca4;
-  --accent: #7a4f2f;
-  --title-hover: #5e3d24;
-  --bg-gradient: radial-gradient(circle at top left, #fbf5e9 0%, #efe3cf 58%, #e3d3bc 100%);
-  --card-shadow: 0 12px 24px rgba(54, 38, 24, 0.11);
-  --soft-shadow: 0 4px 12px rgba(54, 38, 24, 0.08);
+  --bg: #edf3ff;
+  --panel: #f8fbff;
+  --text: #0f1c34;
+  --muted: #51617f;
+  --line: #c4d4ee;
+  --accent: #1f5da8;
+  --title-hover: #184b89;
+  --bg-gradient: radial-gradient(circle at top left, #fafdff 0%, #e8f0ff 58%, #d7e5ff 100%);
+  --card-shadow: 0 12px 24px rgba(16, 36, 72, 0.12);
+  --soft-shadow: 0 4px 12px rgba(16, 36, 72, 0.09);
   --page-bg-opacity: 0.24;
   --page-bg-brightness: 1.04;
 }
 /* Theme tokens (dark mode overrides) */
 [data-theme="dark"] {
-  --bg: #211b17;
-  --panel: #2a231d;
-  --text: #eadcc9;
-  --muted: #baa48b;
-  --line: #524135;
-  --accent: #d0a375;
-  --title-hover: #e8c39d;
-  --bg-gradient: radial-gradient(circle at top left, #342a22 0%, #281f19 58%, #1c1612 100%);
-  --card-shadow: 0 14px 26px rgba(10, 7, 5, 0.42);
-  --soft-shadow: 0 6px 14px rgba(10, 7, 5, 0.32);
+  --bg: #070d18;
+  --panel: #0f1726;
+  --text: #e6efff;
+  --muted: #9cb3d7;
+  --line: #2a3d5f;
+  --accent: #60a5ff;
+  --title-hover: #90c2ff;
+  --bg-gradient: radial-gradient(circle at top left, #13243f 0%, #0d172a 58%, #070d18 100%);
+  --card-shadow: 0 14px 26px rgba(3, 8, 16, 0.52);
+  --soft-shadow: 0 6px 14px rgba(3, 8, 16, 0.4);
   --page-bg-opacity: 0.14;
   --page-bg-brightness: 0.74;
 }
@@ -65,7 +65,7 @@ body::before {
   width: 320px;
   height: 320px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(122, 79, 47, 0.12) 0%, rgba(122, 79, 47, 0) 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 70%);
   pointer-events: none;
   z-index: -1;
 }

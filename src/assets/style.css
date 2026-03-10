@@ -235,7 +235,6 @@ nav a:hover {
   align-items: center;
   border-top: 1px dashed var(--line);
   padding: 18px 8px;
-  border-radius: 12px;
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   cursor: pointer;
 }
@@ -360,7 +359,7 @@ nav a:hover {
   font-size: 0.85rem;
   border: 1px solid color-mix(in srgb, var(--line) 70%, var(--accent) 30%);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 4px 10px 0px;
   margin-right: 8px;
 }
 /* Markdown content typography */
@@ -424,7 +423,7 @@ body.is-leaving .site-footer {
   text-decoration: none;
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 4px 10px 0;
   margin-bottom: 8px;
   color: var(--muted);
   transition: color 0.16s ease, border-color 0.16s ease;
@@ -440,8 +439,7 @@ body.is-leaving .site-footer {
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 3px 12px;
-  font-weight: 700;
+  padding: 4px 12px 1px;
   transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
 }
 .about-entry:hover {

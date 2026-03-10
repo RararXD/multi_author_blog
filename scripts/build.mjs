@@ -775,4 +775,15 @@ const authorProfiles = buildAuthorProfiles();
 const authors = linkAuthors(posts, authorProfiles);
 buildSite(posts, authors);
 
+const fontSource = './public/fonts';
+const fontDestination = './dist/public/fonts';
+
+if (fs.existsSync(fontSource)) {
+  // Recursively copies the fonts folder to the dist folder
+  fs.cpSync(fontSource, fontDestination, { recursive: true });
+  console.log('Fonts copied to dist!');
+} else {
+  console.log('No font copied to dist');
+}
+
 console.log(`Built ${posts.length} posts and ${authors.length} authors into dist/.`);

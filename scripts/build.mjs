@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import MarkdownIt from 'markdown-it';
+import markdownItFootnote from 'markdown-it-footnote';
+import markdownItKatex from 'markdown-it-katex';
+import markdownItMark from 'markdown-it-mark';
+import markdownItTaskLists from 'markdown-it-task-lists';
 
 const root = process.cwd();
 const srcDir = path.join(root, 'src');
@@ -57,6 +62,98 @@ function escapeHtml(str) {
     .replaceAll("'", '&#39;');
 }
 
+const markdown = createMarkdownRenderer();
+
+function createMarkdownRenderer() {
+  const md = new MarkdownIt({
+    html: true,
+    linkify: true,
+    typographer: true
+  });
+
+  md.use(markdownItFootnote);
+  md.use(markdownItMark);
+  md.use(markdownItTaskLists, { label: true, labelAfter: true });
+  md.use(markdownItKatex, { throwOnError: false, errorColor: '#cc0000' });
+
+  const defaultFence = md.renderer.rules.fence || ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options));
+  md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+    const token = tokens[idx];
+    const info = (token.info || '').trim();
+    if (info === 'mermaid') {
+      return `<div class="mermaid">${escapeHtml(token.content)}</div>`;
+    }
+    return defaultFence(tokens, idx, options, env, self);
+  };
+
+  md.core.ruler.push('callouts', (state) => {
+    const tokens = state.tokens;
+    for (let i = 0; i < tokens.length; i += 1) {
+      if (tokens[i].type !== 'blockquote_open') continue;
+
+      let level = 1;
+      let closeIndex = i + 1;
+      while (closeIndex < tokens.length && level > 0) {
+        if (tokens[closeIndex].type === 'blockquote_open') level += 1;
+        if (tokens[closeIndex].type === 'blockquote_close') level -= 1;
+        if (level === 0) break;
+        closeIndex += 1;
+      }
+      if (level !== 0) continue;
+
+      let inlineIndex = -1;
+      for (let j = i + 1; j < closeIndex; j += 1) {
+        if (tokens[j].type === 'inline') {
+          inlineIndex = j;
+          break;
+        }
+      }
+      if (inlineIndex === -1) {
+        i = closeIndex;
+        continue;
+      }
+
+      const content = tokens[inlineIndex].content.trim();
+      const match = content.match(/^\\[!([a-zA-Z]+)\\](?:\\s*(.+))?$/);
+      if (!match) {
+        i = closeIndex;
+        continue;
+      }
+
+      const rawType = match[1].toLowerCase();
+      const titleOverride = (match[2] || '').trim();
+      const allowed = ['note', 'tip', 'warning', 'caution', 'important'];
+      const calloutType = allowed.includes(rawType) ? rawType : 'note';
+      const titleText = titleOverride || calloutType[0].toUpperCase() + calloutType.slice(1);
+
+      const paragraphOpen = inlineIndex - 1;
+      const paragraphClose = inlineIndex + 1;
+      if (tokens[paragraphOpen]?.type === 'paragraph_open' && tokens[paragraphClose]?.type === 'paragraph_close') {
+        tokens.splice(paragraphOpen, 3);
+        if (paragraphOpen < closeIndex) closeIndex -= 3;
+      }
+
+      tokens[i].type = 'callout_open';
+      tokens[i].tag = 'div';
+      tokens[i].attrSet('class', `callout callout-${calloutType}`);
+      tokens[closeIndex].type = 'callout_close';
+      tokens[closeIndex].tag = 'div';
+
+      const titleOpen = new state.Token('paragraph_open', 'p', 1);
+      titleOpen.attrSet('class', 'callout-title');
+      const titleInline = new state.Token('inline', '', 0);
+      titleInline.content = titleText;
+      titleInline.children = [];
+      const titleClose = new state.Token('paragraph_close', 'p', -1);
+
+      tokens.splice(i + 1, 0, titleOpen, titleInline, titleClose);
+      i = closeIndex + 3;
+    }
+  });
+
+  return md;
+}
+
 function slugify(input) {
   return String(input)
     .toLowerCase()
@@ -91,85 +188,7 @@ function parseFrontMatter(raw) {
 }
 
 function markdownToHtml(md) {
-  const lines = md.replace(/\r\n/g, '\n').split('\n');
-  let html = '';
-  let inList = false;
-
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i].trim();
-
-    if (!line) {
-      if (inList) {
-        html += '</ul>';
-        inList = false;
-      }
-      continue;
-    }
-
-    if (line.startsWith('### ')) {
-      if (inList) {
-        html += '</ul>';
-        inList = false;
-      }
-      html += `<h3>${inlineMarkdown(line.slice(4))}</h3>`;
-      continue;
-    }
-
-    if (line.startsWith('## ')) {
-      if (inList) {
-        html += '</ul>';
-        inList = false;
-      }
-      html += `<h2>${inlineMarkdown(line.slice(3))}</h2>`;
-      continue;
-    }
-
-    if (line.startsWith('# ')) {
-      if (inList) {
-        html += '</ul>';
-        inList = false;
-      }
-      html += `<h1>${inlineMarkdown(line.slice(2))}</h1>`;
-      continue;
-    }
-
-    if (line.startsWith('- ')) {
-      if (!inList) {
-        html += '<ul>';
-        inList = true;
-      }
-      html += `<li>${inlineMarkdown(line.slice(2))}</li>`;
-      continue;
-    }
-
-    if (line.startsWith('> ')) {
-      if (inList) {
-        html += '</ul>';
-        inList = false;
-      }
-      html += `<blockquote>${inlineMarkdown(line.slice(2))}</blockquote>`;
-      continue;
-    }
-
-    if (inList) {
-      html += '</ul>';
-      inList = false;
-    }
-
-    html += `<p>${inlineMarkdown(line)}</p>`;
-  }
-
-  if (inList) html += '</ul>';
-  return html;
-}
-
-function inlineMarkdown(text) {
-  let out = escapeHtml(text);
-  out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
-  out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-  return out;
+  return markdown.render(md);
 }
 
 function template(input, vars) {

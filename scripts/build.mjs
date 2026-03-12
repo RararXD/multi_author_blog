@@ -3,7 +3,6 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import MarkdownIt from 'markdown-it';
 import markdownItFootnote from 'markdown-it-footnote';
-import markdownItKatex from 'markdown-it-katex';
 import markdownItMark from 'markdown-it-mark';
 import markdownItTaskLists from 'markdown-it-task-lists';
 
@@ -74,7 +73,6 @@ function createMarkdownRenderer() {
   md.use(markdownItFootnote);
   md.use(markdownItMark);
   md.use(markdownItTaskLists, { label: true, labelAfter: true });
-  md.use(markdownItKatex, { throwOnError: false, errorColor: '#cc0000' });
 
   const defaultFence = md.renderer.rules.fence || ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options));
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
@@ -114,7 +112,7 @@ function createMarkdownRenderer() {
       }
 
       const content = tokens[inlineIndex].content.trim();
-      const match = content.match(/^\\[!([a-zA-Z]+)\\](?:\\s*(.+))?$/);
+      const match = content.match(/^\[!([a-zA-Z]+)\](?:\s*(.+))?$/);
       if (!match) {
         i = closeIndex;
         continue;

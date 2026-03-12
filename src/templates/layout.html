@@ -135,7 +135,31 @@
           document.head.appendChild(script);
         };
 
+        const initMath = () => {
+          const contentRoot = document.querySelector('.markdown-body');
+          if (!contentRoot) return;
+          const katexScript = document.createElement('script');
+          katexScript.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
+          katexScript.onload = () => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js';
+            script.onload = () => {
+              if (!window.renderMathInElement) return;
+              window.renderMathInElement(contentRoot, {
+                delimiters: [
+                  { left: '$$', right: '$$', display: true },
+                  { left: '$', right: '$', display: false }
+                ],
+                throwOnError: false
+              });
+            };
+            document.head.appendChild(script);
+          };
+          document.head.appendChild(katexScript);
+        };
+
         initMermaid();
+        initMath();
       })();
     </script>
   </body>

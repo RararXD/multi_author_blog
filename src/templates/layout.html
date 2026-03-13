@@ -46,6 +46,9 @@
           if (themeToggle) {
             themeToggle.textContent = mode === 'auto' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light';
           }
+          if (window.syncGiscusTheme) {
+            window.syncGiscusTheme(theme);
+          }
         };
 
         const savedMode = localStorage.getItem('theme-mode') || 'auto';

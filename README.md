@@ -11,6 +11,7 @@
 - 文章支持多作者，作者名可点击跳转作者页
 - 支持文章封面图（`cover`）
 - 支持页面背景图（按页面配置/Front Matter），并随主题自动调整亮度与透明度
+- 支持 Giscus 评论（GitHub 登录与头像/用户名展示）
 - 页面模板与内容分离
 - 构建产物纯静态，可部署到 Cloudflare Pages
 
@@ -87,6 +88,33 @@ background: /images/cover-build.svg
 
 - 已适配移动端和窄窗口 PC，避免卡片/导航错位。
 - 页面切换使用轻量淡入淡出，避免花哨动画；并兼容 `prefers-reduced-motion`。
+
+## 评论区（Giscus）
+
+评论区为纯前端加载，使用 GitHub 登录，显示对应头像与用户名，并支持在文章中选中文字后“引用评论”。
+
+配置文件：`src/static/comments.json`（构建时读取）。
+
+你需要在 Giscus 管理页拿到以下字段并填写：
+
+- `repo`
+- `repoId`
+- `category`
+- `categoryId`
+
+常用可选项：
+
+- `mapping`：评论与文章的映射方式，默认 `pathname`
+- `lang`：评论区语言，默认 `zh-CN`
+- `themeLight` / `themeDark`：明暗主题，切换站点主题时会自动同步
+- `quoteMaxLength`：引用选中文字的最大长度（默认 800）
+
+设置 `enabled: true` 后，构建即可生效。
+
+使用说明：
+
+- 发表评论：在评论区使用 GitHub 登录后输入并提交。
+- 引用正文：选中正文中的一段文字，会出现“引用评论”按钮；点击后会复制引用并自动滚动到评论区，在输入框粘贴即可。
 
 ## 本地预览
 

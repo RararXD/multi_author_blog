@@ -21,6 +21,43 @@ const pageBackgrounds = {
   search: '/images/cover-hello.svg',
   notFound: '/images/cover-build.svg'
 };
+const commentsConfigPath = path.join(srcDir, 'static', 'comments.json');
+
+function parseBoolean(value) {
+  if (typeof value === 'boolean') return value;
+  return ['1', 'true', 'yes', 'y', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+function readJson(file, fallback = {}) {
+  try {
+    if (!fs.existsSync(file)) return fallback;
+    return JSON.parse(read(file));
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function loadCommentsConfig() {
+  const raw = readJson(commentsConfigPath, {});
+  return {
+    enabled: parseBoolean(raw.enabled),
+    provider: raw.provider || 'giscus',
+    repo: raw.repo || '',
+    repoId: raw.repoId || '',
+    category: raw.category || '',
+    categoryId: raw.categoryId || '',
+    mapping: raw.mapping || 'pathname',
+    strict: parseBoolean(raw.strict) ? '1' : '0',
+    reactionsEnabled: parseBoolean(raw.reactionsEnabled ?? true) ? '1' : '0',
+    emitMetadata: parseBoolean(raw.emitMetadata) ? '1' : '0',
+    inputPosition: raw.inputPosition || 'top',
+    lang: raw.lang || 'zh-CN',
+    themeLight: raw.themeLight || 'light',
+    themeDark: raw.themeDark || 'dark',
+    loading: raw.loading || 'lazy',
+    quoteMaxLength: Number.isFinite(raw.quoteMaxLength) ? raw.quoteMaxLength : 800
+  };
+}
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -251,6 +288,200 @@ function parseBool(value) {
   return ['1', 'true', 'yes', 'y', 'on'].includes(text);
 }
 
+function buildCommentsSection(config) {
+  if (!config.enabled) {
+    return `<section class="post-comments" id="comments">
+    <h2>评论</h2>
+    <p class="meta">评论区已关闭。</p>
+  </section>`;
+  }
+
+  const missing = [];
+  if (!config.repo) missing.push('repo');
+  if (!config.repoId) missing.push('repoId');
+  if (!config.category) missing.push('category');
+  if (!config.categoryId) missing.push('categoryId');
+
+  if (missing.length) {
+    return `<section class="post-comments" id="comments">
+    <h2>评论</h2>
+    <p class="meta">评论未配置完成，请在 <code>src/static/comments.json</code> 填写：${escapeHtml(missing.join(', '))}。</p>
+  </section>`;
+  }
+
+  return `<section class="post-comments" id="comments" data-comments>
+    <div class="comments-header">
+      <h2>评论</h2>
+      <p class="meta">使用 GitHub 登录后发表评论。</p>
+      <p class="comment-hint">选中文章内容后可点击“引用评论”。</p>
+    </div>
+    <div class="giscus-wrap">
+      <script
+        src="https://giscus.app/client.js"
+        data-repo="${escapeHtml(config.repo)}"
+        data-repo-id="${escapeHtml(config.repoId)}"
+        data-category="${escapeHtml(config.category)}"
+        data-category-id="${escapeHtml(config.categoryId)}"
+        data-mapping="${escapeHtml(config.mapping)}"
+        data-strict="${escapeHtml(config.strict)}"
+        data-reactions-enabled="${escapeHtml(config.reactionsEnabled)}"
+        data-emit-metadata="${escapeHtml(config.emitMetadata)}"
+        data-input-position="${escapeHtml(config.inputPosition)}"
+        data-lang="${escapeHtml(config.lang)}"
+        data-theme="${escapeHtml(config.themeLight)}"
+        data-loading="${escapeHtml(config.loading)}"
+        crossorigin="anonymous"
+        async>
+      </script>
+    </div>
+    <div class="quote-bubble" data-quote-bubble aria-hidden="true">
+      <button class="quote-btn" type="button" data-quote-action>引用评论</button>
+    </div>
+    <div class="quote-toast" data-quote-toast role="status" aria-live="polite"></div>
+  </section>`;
+}
+
+function buildCommentsScript(config) {
+  if (!config.enabled) return '';
+  if (!config.repo || !config.repoId || !config.category || !config.categoryId) return '';
+
+  return `<script>
+    (() => {
+      const commentsRoot = document.querySelector('[data-comments]');
+      if (!commentsRoot) return;
+      const config = ${JSON.stringify({
+        themeLight: config.themeLight,
+        themeDark: config.themeDark,
+        quoteMaxLength: config.quoteMaxLength
+      })};
+      const quoteBubble = commentsRoot.querySelector('[data-quote-bubble]');
+      const quoteToast = commentsRoot.querySelector('[data-quote-toast]');
+      const quoteButton = commentsRoot.querySelector('[data-quote-action]');
+      const article = document.querySelector('.markdown-body');
+      const commentAnchor = document.getElementById('comments');
+      let lastSelection = '';
+      let lastSelectionLength = 0;
+
+      const showToast = (message) => {
+        if (!quoteToast) return;
+        quoteToast.textContent = message;
+        quoteToast.classList.add('show');
+        setTimeout(() => quoteToast.classList.remove('show'), 1800);
+      };
+
+      const copyToClipboard = async (text) => {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      };
+
+      const normalizeSelection = (text) =>
+        String(text || '')
+          .replace(/\\s+\\n/g, '\\n')
+          .replace(/\\n{3,}/g, '\\n\\n')
+          .trim();
+
+      const buildQuote = (text) => {
+        const lines = text.split(/\\n/);
+        const quoted = lines.map((line) => (line.trim() ? '> ' + line : '>')).join('\\n');
+        return quoted + '\\n\\n';
+      };
+
+      const updateBubble = () => {
+        if (!quoteBubble || !article) return;
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed) {
+          quoteBubble.style.opacity = '0';
+          quoteBubble.setAttribute('aria-hidden', 'true');
+          lastSelection = '';
+          return;
+        }
+        const range = selection.getRangeAt(0);
+        if (!article.contains(range.commonAncestorContainer)) {
+          quoteBubble.style.opacity = '0';
+          quoteBubble.setAttribute('aria-hidden', 'true');
+          lastSelection = '';
+          return;
+        }
+        const text = normalizeSelection(selection.toString());
+        if (!text) {
+          quoteBubble.style.opacity = '0';
+          quoteBubble.setAttribute('aria-hidden', 'true');
+          lastSelection = '';
+          return;
+        }
+        lastSelectionLength = text.length;
+        lastSelection = text.length > config.quoteMaxLength ? text.slice(0, config.quoteMaxLength) : text;
+        const rect = range.getBoundingClientRect();
+        const idealLeft = rect.left + rect.width / 2;
+        quoteBubble.style.left = Math.max(80, Math.min(idealLeft, window.innerWidth - 80)) + 'px';
+        quoteBubble.style.top = Math.max(rect.top - 44, 10) + 'px';
+        quoteBubble.style.opacity = '1';
+        quoteBubble.setAttribute('aria-hidden', 'false');
+      };
+
+      const handleQuote = async () => {
+        if (!lastSelection) return;
+        const extra = lastSelectionLength > lastSelection.length;
+        const quoteText = buildQuote(lastSelection);
+        try {
+          await copyToClipboard(quoteText);
+          if (commentAnchor) {
+            commentAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          showToast(extra ? '已复制引用（内容过长已截断），请在评论框粘贴。' : '已复制引用，请在评论框粘贴。');
+        } catch (error) {
+          showToast('复制失败，请手动复制。');
+        }
+      };
+
+      if (quoteButton) {
+        quoteButton.addEventListener('click', handleQuote);
+      }
+
+      ['mouseup', 'keyup', 'touchend'].forEach((event) => {
+        document.addEventListener(event, () => {
+          setTimeout(updateBubble, 0);
+        });
+      });
+
+      document.addEventListener('scroll', () => {
+        if (quoteBubble && quoteBubble.getAttribute('aria-hidden') === 'false') {
+          updateBubble();
+        }
+      }, { passive: true });
+
+      const syncGiscusTheme = (theme, attempt = 0) => {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) {
+          if (attempt < 8) {
+            setTimeout(() => syncGiscusTheme(theme, attempt + 1), 260);
+          }
+          return;
+        }
+        const giscusTheme = theme === 'dark' ? config.themeDark : config.themeLight;
+        iframe.contentWindow?.postMessage(
+          { giscus: { setConfig: { theme: giscusTheme } } },
+          'https://giscus.app'
+        );
+      };
+
+      window.syncGiscusTheme = syncGiscusTheme;
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      syncGiscusTheme(currentTheme);
+    })();
+  </script>`;
+}
+
 function hashPassword(text) {
   return createHash('sha256').update(String(text)).digest('hex');
 }
@@ -407,6 +638,7 @@ function buildSite(posts, authors) {
   const layout = read(path.join(srcDir, 'templates', 'layout.html'));
   const postTpl = read(path.join(srcDir, 'templates', 'post.html'));
   const year = new Date().getFullYear();
+  const commentsConfig = loadCommentsConfig();
   const publicPosts = posts.filter((post) => !post.hidden);
   const postList = publicPosts.map((post) => renderPostCard(post, true)).join('');
 
@@ -711,7 +943,9 @@ function buildSite(posts, authors) {
       lockPanel,
       contentClass: isLocked ? 'is-locked' : '',
       content: post.html,
-      lockScript
+      lockScript,
+      commentsSection: buildCommentsSection(commentsConfig),
+      commentsScript: buildCommentsScript(commentsConfig)
     });
 
     const html = renderLayoutPage(

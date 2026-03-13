@@ -1,0 +1,18 @@
+{
+  "enabled": false,
+  "provider": "giscus",
+  "repo": "OWNER/REPO",
+  "repoId": "",
+  "category": "General",
+  "categoryId": "",
+  "mapping": "pathname",
+  "strict": false,
+  "reactionsEnabled": true,
+  "emitMetadata": false,
+  "inputPosition": "top",
+  "lang": "zh-CN",
+  "themeLight": "light",
+  "themeDark": "dark",
+  "loading": "lazy",
+  "quoteMaxLength": 800
+}

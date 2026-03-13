@@ -358,6 +358,63 @@ nav a:hover {
   margin: 4px 0 0;
   color: var(--muted);
 }
+.post-comments {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.comments-header h2 {
+  margin: 0 0 6px;
+}
+.comment-hint {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 4px 0 0;
+}
+.giscus-wrap {
+  margin-top: 16px;
+}
+.quote-bubble {
+  position: fixed;
+  z-index: 40;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+}
+.quote-btn {
+  pointer-events: auto;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 80%, var(--accent) 20%);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+.quote-btn:hover {
+  border-color: var(--accent);
+}
+.quote-toast {
+  position: fixed;
+  right: 22px;
+  bottom: 24px;
+  background: color-mix(in srgb, var(--panel) 88%, var(--accent) 12%);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 40;
+}
+.quote-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
 .post-lock.is-unlocked {
   display: none;
 }

@@ -639,18 +639,26 @@ function renderAuthorLinks(authors) {
     .join('<span class="meta-sep">/</span>');
 }
 
+function detectLang(text) {
+  return /[\u4e00-\u9fff]/.test(text) ? 'zh' : 'en';
+}
+
 function renderPostMeta(post, options = {}) {
   const { hideCategory = false, hideTag = '' } = options;
   const categorySlug = slugify(post.category) || 'category';
+  const categoryLabel = `<span class="tag-label" lang="${detectLang(post.category)}">${escapeHtml(
+    post.category
+  )}</span>`;
   const categoryChip = hideCategory
     ? ''
-    : `<a class="tag tag-primary" href="/categories/${escapeHtml(categorySlug)}/">${escapeHtml(post.category)}</a>`;
+    : `<a class="tag tag-primary" href="/categories/${escapeHtml(categorySlug)}/">${categoryLabel}</a>`;
   const tagChips = post.tags.length
     ? `<span class="tag-list">${post.tags
         .filter((tag) => tag !== hideTag)
         .map((tag) => {
           const slug = slugify(tag) || 'tag';
-          return `<a class="tag tag-secondary" href="/tags/${escapeHtml(slug)}/">#${escapeHtml(tag)}</a>`;
+          const tagLabel = `<span class="tag-label" lang="${detectLang(tag)}">#${escapeHtml(tag)}</span>`;
+          return `<a class="tag tag-secondary" href="/tags/${escapeHtml(slug)}/">${tagLabel}</a>`;
         })
         .join('')}</span>`
     : '';
@@ -971,12 +979,18 @@ function buildSite(posts, authors) {
         .replace(/(^-|-$)/g, '');
     }
 
+    function detectLang(text) {
+      return /[\\u4e00-\\u9fff]/.test(text) ? 'zh' : 'en';
+    }
+
     function renderMeta(post) {
       const categorySlug = slugifyText(post.category) || 'category';
-      const categoryChip = '<a class="tag tag-primary" href="/categories/' + esc(categorySlug) + '/">' + esc(post.category) + '</a>';
+      const categoryLabel = '<span class="tag-label" lang="' + detectLang(post.category) + '">' + esc(post.category) + '</span>';
+      const categoryChip = '<a class="tag tag-primary" href="/categories/' + esc(categorySlug) + '/">' + categoryLabel + '</a>';
       const tags = (post.tags || []).map((tag) => {
         const slug = slugifyText(tag) || 'tag';
-        return '<a class="tag tag-secondary" href="/tags/' + esc(slug) + '/">#' + esc(tag) + '</a>';
+        const tagLabel = '<span class="tag-label" lang="' + detectLang(tag) + '">#' + esc(tag) + '</span>';
+        return '<a class="tag tag-secondary" href="/tags/' + esc(slug) + '/">' + tagLabel + '</a>';
       }).join('');
       const tagList = tags ? '<span class="tag-list">' + tags + '</span>' : '';
       return '<div class="post-meta-row"><span class="meta-left">' + esc(post.date) + ' · ' + renderAuthorLinks(post.authors) + '</span><span class="meta-right">' + categoryChip + tagList + '</span></div>';

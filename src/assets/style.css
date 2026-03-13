@@ -61,6 +61,13 @@
   font-style: normal;
 }
 @font-face {
+  font-family: "Noto Serif SC Adjusted";
+  src: url("../../public/fonts/noto-serif-sc.woff2") format("woff2");
+  font-weight: 300 800;
+  font-style: normal;
+  size-adjust: 95%;
+}
+@font-face {
   font-family: "Computer Modern Typewriter";
   src: url("../../public/fonts/computer-modern-typewriter.woff2") format("woff2");
   font-weight: normal;
@@ -69,7 +76,7 @@
 
 body {
   margin: 0;
-  font-family: Newsreader, "Noto Serif SC", serif;
+  font-family: Newsreader, "Noto Serif SC Adjusted", "Noto Serif SC", serif;
   background: var(--bg-gradient);
   color: var(--text);
   line-height: 1.7;
@@ -177,7 +184,7 @@ nav a {
   padding: 4px 11px;
   cursor: pointer;
   transition: transform 0.16s ease, background 0.16s ease;
-  font-family: "Newsreader", "Noto Serif SC", serif;
+  font-family: "Newsreader", "Noto Serif SC Adjusted", "Noto Serif SC", serif;
 }
 nav a:hover,
 a:hover {
@@ -523,7 +530,10 @@ nav a:hover {
   padding: 0 14px;
   height: 30px;
   align-items: center;
+  justify-content: center;
   border-width: 2px;
+  line-height: 1;
+  padding-top: 1px;
 }
 .post-card .tag.tag-primary {
   background: color-mix(in srgb, var(--accent) 6%, var(--panel) 94%);
@@ -540,6 +550,13 @@ nav a:hover {
 .post-card .tag.tag-secondary {
   background: color-mix(in srgb, var(--accent) 6%, var(--panel) 94%);
   border-color: color-mix(in srgb, var(--line) 45%, transparent);
+}
+.tag-label {
+  display: inline-block;
+  transform: translateY(0);
+}
+.tag-label:lang(zh) {
+  transform: translateY(1px);
 }
 .post-card .tag:hover {
   transform: translateY(-1px);

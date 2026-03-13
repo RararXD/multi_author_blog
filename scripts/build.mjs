@@ -252,9 +252,14 @@ function buildBodyAttrs(backgroundImage) {
 }
 
 function renderLayoutPage(layout, pageVars, backgroundImage = '') {
+  const bodyAttrs = buildBodyAttrs(backgroundImage);
+  const mergedBodyClass = [pageVars.bodyClass, bodyAttrs.bodyClass].filter(Boolean).join(' ');
+  const mergedBodyStyle = [pageVars.bodyStyle, bodyAttrs.bodyStyle].filter(Boolean).join(' ');
   return template(layout, {
     ...pageVars,
-    ...buildBodyAttrs(backgroundImage)
+    ...bodyAttrs,
+    bodyClass: mergedBodyClass,
+    bodyStyle: mergedBodyStyle
   });
 }
 
@@ -634,11 +639,15 @@ function renderAuthorLinks(authors) {
     .join('<span class="meta-sep">/</span>');
 }
 
-function renderPostMeta(post) {
+function renderPostMeta(post, options = {}) {
+  const { hideCategory = false, hideTag = '' } = options;
   const categorySlug = slugify(post.category) || 'category';
-  const categoryChip = `<a class="tag tag-primary" href="/categories/${escapeHtml(categorySlug)}/">${escapeHtml(post.category)}</a>`;
+  const categoryChip = hideCategory
+    ? ''
+    : `<a class="tag tag-primary" href="/categories/${escapeHtml(categorySlug)}/">${escapeHtml(post.category)}</a>`;
   const tagChips = post.tags.length
     ? `<span class="tag-list">${post.tags
+        .filter((tag) => tag !== hideTag)
         .map((tag) => {
           const slug = slugify(tag) || 'tag';
           return `<a class="tag tag-secondary" href="/tags/${escapeHtml(slug)}/">#${escapeHtml(tag)}</a>`;
@@ -648,13 +657,17 @@ function renderPostMeta(post) {
   return `<div class="post-meta-row"><span class="meta-left">${escapeHtml(post.date)} · ${renderAuthorLinks(post.authors)}</span><span class="meta-right">${categoryChip}${tagChips}</span></div>`;
 }
 
-function renderPostCard(post, includeSummary = true) {
+function renderPostCard(post, includeSummary = true, metaOptions = {}) {
   return `<li class="post-card" data-href="/posts/${post.slug}/" role="link" tabindex="0">
-    ${coverImage(post.cover, 'post-cover', `${post.title} cover`)}
-    <div class="post-main">
-      <p class="meta post-meta">${renderPostMeta(post)}</p>
-      <h2 class="post-card-title">${escapeHtml(post.title)}</h2>
-      ${includeSummary ? `<p>${escapeHtml(post.summary)}</p>` : ''}
+    <div class="post-card__inner">
+      <div class="post-cover-wrap">
+        ${coverImage(post.cover, 'post-cover', `${post.title} cover`)}
+      </div>
+      <div class="post-main">
+        <div class="meta post-meta">${renderPostMeta(post, metaOptions)}</div>
+        <h2 class="post-card-title">${escapeHtml(post.title)}</h2>
+        ${includeSummary ? `<p class="post-excerpt">${escapeHtml(post.summary)}</p>` : ''}
+      </div>
     </div>
   </li>`;
 }
@@ -712,7 +725,8 @@ function buildSite(posts, authors) {
       title: 'Home | MyNotes',
       description: 'A minimal personal static website.',
       content: indexContent,
-      year
+      year,
+      bodyClass: 'home-page'
     },
     pageBackgrounds.home
   );
@@ -817,7 +831,7 @@ function buildSite(posts, authors) {
   const categoryBlocks = Object.entries(grouped)
     .sort(([a], [b]) => a.localeCompare(b, 'zh-Hans-CN'))
     .map(([cat, items]) => {
-      const links = items.map((post) => renderPostCard(post, false)).join('');
+      const links = items.map((post) => renderPostCard(post, false, { hideCategory: true })).join('');
       const slug = slugify(cat) || 'category';
       return `<section id="cat-${escapeHtml(slug)}"><h2>${escapeHtml(cat)}</h2><ul class="post-list">${links}</ul></section>`;
     })
@@ -870,7 +884,7 @@ function buildSite(posts, authors) {
 
   for (const [cat, items] of Object.entries(grouped)) {
     const slug = slugify(cat) || 'category';
-    const links = items.map((post) => renderPostCard(post, true)).join('');
+    const links = items.map((post) => renderPostCard(post, true, { hideCategory: true })).join('');
     const categoryContent = `<section class="hero">
       <a class="home-btn" href="/categories/">← 返回分类</a>
       <h1>${escapeHtml(cat)}</h1>
@@ -897,7 +911,7 @@ function buildSite(posts, authors) {
 
   for (const [tag, items] of Object.entries(tagGrouped)) {
     const slug = slugify(tag) || 'category';
-    const links = items.map((post) => renderPostCard(post, true)).join('');
+    const links = items.map((post) => renderPostCard(post, true, { hideTag: tag })).join('');
     const tagContent = `<section class="hero">
       <a class="home-btn" href="/">← 返回主页</a>
       <h1>${escapeHtml(tag)}</h1>
@@ -1107,7 +1121,9 @@ function buildSite(posts, authors) {
 
     const content = template(postTpl, {
       title: escapeHtml(post.title),
-      metaHtml: isLocked ? `作者：${renderAuthorLinks(post.authors)}` : renderPostMeta(post),
+      metaHtml: isLocked
+        ? `<div class="post-meta-row">作者：${renderAuthorLinks(post.authors)}</div>`
+        : renderPostMeta(post),
       lockPanel,
       contentClass: isLocked ? 'is-locked' : '',
       content: post.html,

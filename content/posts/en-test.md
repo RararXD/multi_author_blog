@@ -3,6 +3,7 @@ title: English Article Test
 date: 2026-03-10
 author: demo-author
 category: Test
+tags: English, Test
 cover: /images/cover-hello.svg
 background: /images/cover-hello.svg
 summary: Tests English article appearance

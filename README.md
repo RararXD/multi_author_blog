@@ -5,7 +5,10 @@
 - `about` 页面
 - `authors` 作者列表页 + 作者详情页
 - `category` 分类页
+- `tags` 标签详情页（由标签云进入）
+- `/posts/` 全部文章页（首页“更多.....”入口）
 - `search` 搜索页（前端静态搜索）
+- 首页仅展示最新三篇文章，并提供可交互的分类 Tag 云
 - 页面切换过渡动画（轻量淡入/淡出）
 - 主题自动切换（按本地时间：白天浅色、夜间深色），并可手动切换
 - 文章支持多作者，作者名可点击跳转作者页
@@ -40,6 +43,7 @@ author: 你的名字
 # 或者使用 authors 支持多作者：
 # authors: 张三, 李四
 category: 分类名
+tags: 标签1, 标签2
 cover: /images/cover-hello.svg
 background: /images/cover-build.svg
 hidden: false
@@ -57,6 +61,7 @@ summary: 摘要（可选）
 - `background` 可选，支持单篇文章独立背景图。
 - `hidden: true` 时，文章不会出现在首页/分类/搜索/作者页列表，只能通过直链访问。
 - `locked: true` 且设置 `password` 后，文章默认只显示标题和作者，输入密码后可查看正文。
+- `category` 用于分类页聚合，`tags` 用于标签云与标签详情页。
 
 ## 新增作者资料
 

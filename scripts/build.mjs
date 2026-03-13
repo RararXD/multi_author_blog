@@ -277,6 +277,19 @@ function parseAuthorNames(meta) {
   return unique.length ? unique : ['Anonymous'];
 }
 
+function parseTagNames(meta) {
+  const raw = [meta.tags, meta.tag].filter(Boolean).join(',');
+  const split = raw
+    .split(/[,，;；|/]/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const unique = [];
+  for (const name of split) {
+    if (!unique.includes(name)) unique.push(name);
+  }
+  return unique;
+}
+
 function normalizeName(name) {
   return String(name).trim().toLowerCase();
 }
@@ -497,6 +510,7 @@ function buildPosts() {
     const slug = slugify(path.basename(file, '.md'));
     const date = parsed.meta.date || '1970-01-01';
     const category = parsed.meta.category || 'Uncategorized';
+    const tags = parseTagNames(parsed.meta);
     const cover = parsed.meta.cover || '';
     const summary = parsed.meta.summary || excerpt(parsed.body, 100);
     const html = markdownToHtml(parsed.body);
@@ -512,6 +526,7 @@ function buildPosts() {
       slug,
       date,
       category,
+      tags,
       cover,
       summary,
       html,
@@ -620,7 +635,17 @@ function renderAuthorLinks(authors) {
 }
 
 function renderPostMeta(post) {
-  return `${escapeHtml(post.date)} · ${renderAuthorLinks(post.authors)} <span class="tag">${escapeHtml(post.category)}</span>`;
+  const categorySlug = slugify(post.category) || 'category';
+  const categoryChip = `<a class="tag tag-primary" href="/categories/${escapeHtml(categorySlug)}/">${escapeHtml(post.category)}</a>`;
+  const tagChips = post.tags.length
+    ? `<span class="tag-list">${post.tags
+        .map((tag) => {
+          const slug = slugify(tag) || 'tag';
+          return `<a class="tag tag-secondary" href="/tags/${escapeHtml(slug)}/">#${escapeHtml(tag)}</a>`;
+        })
+        .join('')}</span>`
+    : '';
+  return `<div class="post-meta-row"><span class="meta-left">${escapeHtml(post.date)} · ${renderAuthorLinks(post.authors)}</span><span class="meta-right">${categoryChip}${tagChips}</span></div>`;
 }
 
 function renderPostCard(post, includeSummary = true) {
@@ -640,14 +665,46 @@ function buildSite(posts, authors) {
   const year = new Date().getFullYear();
   const commentsConfig = loadCommentsConfig();
   const publicPosts = posts.filter((post) => !post.hidden);
-  const postList = publicPosts.map((post) => renderPostCard(post, true)).join('');
+  const latestPosts = publicPosts.slice(0, 3);
+  const postList = latestPosts.map((post) => renderPostCard(post, true)).join('');
+
+  const tagCounts = publicPosts.reduce((acc, post) => {
+    for (const tag of post.tags) {
+      acc[tag] = (acc[tag] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const tagEntries = Object.entries(tagCounts);
+  const countValues = tagEntries.map(([, count]) => count);
+  const maxCount = Math.max(1, ...countValues);
+  const minCount = Math.min(maxCount, ...countValues);
+  const tagCloudItems = tagEntries
+    .sort((a, b) => a[0].localeCompare(b[0], 'zh-Hans-CN'))
+    .map(([tag, count]) => {
+      const weight = maxCount === minCount ? 0.5 : (count - minCount) / (maxCount - minCount);
+      const slug = slugify(tag) || 'category';
+      return `<a class="tag-cloud-item" href="/tags/${escapeHtml(slug)}/" style="--tag-weight:${weight.toFixed(
+        2
+      )}" title="${escapeHtml(`${count} 篇文章`)}" aria-label="${escapeHtml(`${tag}，${count} 篇文章`)}"><span>${escapeHtml(
+        tag
+      )}</span></a>`;
+    })
+    .join('');
 
   const indexContent = `<section class="hero">
     <h1>简约个人网站</h1>
     <p class="meta">全静态 · 模板与文章分离 · 支持 Cloudflare Pages</p>
     <p><a class="about-entry" href="/about/">关于我</a></p>
   </section>
-  <ul class="post-list">${postList}</ul>`;
+  <h2 class="section-title">最新文章</h2>
+  <ul class="post-list">${postList}</ul>
+  <p class="section-more"><a class="more-link" href="/posts/">更多.....</a></p>
+  <section class="tag-cloud-section">
+    <h2>热门主题</h2>
+    <div class="tag-cloud-shell">
+      <div class="tag-cloud">${tagCloudItems || '<p class="meta">暂无分类标签。</p>'}</div>
+    </div>
+  </section>`;
 
   const indexHtml = renderLayoutPage(
     layout,
@@ -749,10 +806,28 @@ function buildSite(posts, authors) {
     return acc;
   }, {});
 
+  const tagGrouped = publicPosts.reduce((acc, post) => {
+    for (const tag of post.tags) {
+      acc[tag] = acc[tag] || [];
+      acc[tag].push(post);
+    }
+    return acc;
+  }, {});
+
   const categoryBlocks = Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b, 'zh-Hans-CN'))
     .map(([cat, items]) => {
       const links = items.map((post) => renderPostCard(post, false)).join('');
-      return `<section><h2>${escapeHtml(cat)}</h2><ul class="post-list">${links}</ul></section>`;
+      const slug = slugify(cat) || 'category';
+      return `<section id="cat-${escapeHtml(slug)}"><h2>${escapeHtml(cat)}</h2><ul class="post-list">${links}</ul></section>`;
+    })
+    .join('');
+
+  const categoryNav = Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b, 'zh-Hans-CN'))
+    .map(([cat, items]) => {
+      const slug = slugify(cat) || 'category';
+      return `<a class="category-nav-item" href="#cat-${escapeHtml(slug)}"><span>${escapeHtml(cat)}</span><span class="meta">${items.length}</span></a>`;
     })
     .join('');
 
@@ -763,12 +838,89 @@ function buildSite(posts, authors) {
       {
         title: 'Category | MyNotes',
         description: 'Post categories',
-        content: `<section class="hero"><h1>Category</h1><p class="meta">按分类浏览文章</p></section><div class="category-page">${categoryBlocks}</div>`,
+        content: `<section class="hero"><h1>Category</h1><p class="meta">按分类浏览文章</p></section><div class="category-page"><aside class="category-sidebar"><h3>标签索引</h3><nav class="category-nav">${categoryNav}</nav></aside><div class="category-content">${categoryBlocks}</div></div>`,
         year
       },
       pageBackgrounds.categories
     )
   );
+
+  const allPostList = publicPosts.map((post) => renderPostCard(post, true)).join('');
+  const allPostsContent = `<section class="hero">
+    <h1>All Posts</h1>
+    <p class="meta">全部文章列表</p>
+  </section>
+  <section>
+    ${allPostList ? `<ul class="post-list">${allPostList}</ul>` : '<p class="meta">暂无文章。</p>'}
+  </section>`;
+
+  write(
+    path.join(distDir, 'posts', 'index.html'),
+    renderLayoutPage(
+      layout,
+      {
+        title: 'Posts | MyNotes',
+        description: 'All posts list',
+        content: allPostsContent,
+        year
+      },
+      pageBackgrounds.home
+    )
+  );
+
+  for (const [cat, items] of Object.entries(grouped)) {
+    const slug = slugify(cat) || 'category';
+    const links = items.map((post) => renderPostCard(post, true)).join('');
+    const categoryContent = `<section class="hero">
+      <a class="home-btn" href="/categories/">← 返回分类</a>
+      <h1>${escapeHtml(cat)}</h1>
+      <p class="meta">该分类共 ${items.length} 篇文章</p>
+    </section>
+    <section>
+      ${items.length ? `<ul class="post-list">${links}</ul>` : '<p class="meta">暂无文章。</p>'}
+    </section>`;
+
+    write(
+      path.join(distDir, 'categories', slug, 'index.html'),
+      renderLayoutPage(
+        layout,
+        {
+          title: `${escapeHtml(cat)} | MyNotes`,
+          description: `${escapeHtml(cat)} 分类下的文章`,
+          content: categoryContent,
+          year
+        },
+        pageBackgrounds.categories
+      )
+    );
+  }
+
+  for (const [tag, items] of Object.entries(tagGrouped)) {
+    const slug = slugify(tag) || 'category';
+    const links = items.map((post) => renderPostCard(post, true)).join('');
+    const tagContent = `<section class="hero">
+      <a class="home-btn" href="/">← 返回主页</a>
+      <h1>${escapeHtml(tag)}</h1>
+      <p class="meta">该标签共 ${items.length} 篇文章</p>
+    </section>
+    <section>
+      ${items.length ? `<ul class="post-list">${links}</ul>` : '<p class="meta">暂无文章。</p>'}
+    </section>`;
+
+    write(
+      path.join(distDir, 'tags', slug, 'index.html'),
+      renderLayoutPage(
+        layout,
+        {
+          title: `${escapeHtml(tag)} | MyNotes`,
+          description: `${escapeHtml(tag)} 标签下的文章`,
+          content: tagContent,
+          year
+        },
+        pageBackgrounds.categories
+      )
+    );
+  }
 
   const searchContent = `<section class="hero">
     <h1>Search</h1>
@@ -797,8 +949,23 @@ function buildSite(posts, authors) {
         .join('<span class="meta-sep">/</span>');
     }
 
+    function slugifyText(input) {
+      return String(input)
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\u4e00-\u9fa5]+/gi, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+
     function renderMeta(post) {
-      return esc(post.date) + ' · ' + renderAuthorLinks(post.authors) + ' <span class="tag">' + esc(post.category) + '</span>';
+      const categorySlug = slugifyText(post.category) || 'category';
+      const categoryChip = '<a class="tag tag-primary" href="/categories/' + esc(categorySlug) + '/">' + esc(post.category) + '</a>';
+      const tags = (post.tags || []).map((tag) => {
+        const slug = slugifyText(tag) || 'tag';
+        return '<a class="tag tag-secondary" href="/tags/' + esc(slug) + '/">#' + esc(tag) + '</a>';
+      }).join('');
+      const tagList = tags ? '<span class="tag-list">' + tags + '</span>' : '';
+      return '<div class="post-meta-row"><span class="meta-left">' + esc(post.date) + ' · ' + renderAuthorLinks(post.authors) + '</span><span class="meta-right">' + categoryChip + tagList + '</span></div>';
     }
 
     async function load() {
@@ -829,7 +996,8 @@ function buildSite(posts, authors) {
 
         const filtered = posts.filter((post) => {
           const authorText = post.authors.map((item) => item.name).join(' ');
-          const text = (post.title + ' ' + authorText + ' ' + post.category + ' ' + post.contentText).toLowerCase();
+          const tagText = (post.tags || []).join(' ');
+          const text = (post.title + ' ' + authorText + ' ' + post.category + ' ' + tagText + ' ' + post.contentText).toLowerCase();
           return text.includes(keyword);
         });
         render(filtered);
@@ -988,6 +1156,7 @@ function buildSite(posts, authors) {
           slug: author.slug
         })),
         category: post.category,
+        tags: post.tags,
         cover: post.cover,
         summary: post.summary,
         contentText: post.lockHash ? '' : post.contentText

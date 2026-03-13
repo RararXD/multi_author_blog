@@ -3,6 +3,7 @@ title: 我的第一篇文章
 date: 2026-03-09
 author: demo-author
 category: 日常
+tags: 入门, 介绍
 cover: /images/cover-hello.svg
 background: /images/cover-hello.svg
 summary: 这是站点的示例文章，展示如何用单文件写入标题、时间、作者和正文。

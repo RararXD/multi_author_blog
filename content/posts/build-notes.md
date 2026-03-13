@@ -3,6 +3,7 @@ title: 写作与发布流程
 date: 2026-03-08
 author: demo-author
 category: 技术
+tags: 写作, 部署
 cover: /images/cover-build.svg
 background: /images/cover-build.svg
 summary: 记录这个站点的日常写作流程与部署方式。

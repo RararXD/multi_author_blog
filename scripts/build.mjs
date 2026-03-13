@@ -796,8 +796,10 @@ function buildSite(posts, authors) {
       : '<p class="meta">这个作者还没有发布文章。</p>';
 
     const authorContent = `<section class="author-detail-header">
-      <a class="home-btn" href="/authors/">← 返回作者列表</a>
-      <h1>${escapeHtml(author.name)}</h1>
+      <div class="author-detail-row">
+        <h1>${escapeHtml(author.name)}</h1>
+        <a class="home-btn" href="/authors/">← 返回作者列表</a>
+      </div>
       ${author.headline ? `<p class="meta">${escapeHtml(author.headline)}</p>` : ''}
       <section class="markdown-body">${author.bioHtml}</section>
     </section>

@@ -1,10 +1,11 @@
 ---
-name: demo-author
+name: 示例作者
+slug: demo-author
 headline: 写作者 / 开发者
 summary: 记录技术实践与日常写作，偏好简洁、可维护的工具链。
 background: /images/cover-build.svg
 ---
-你好，我是 demo-author。
+你好，我是示例作者。
 
 这个站点主要记录两类内容：
 

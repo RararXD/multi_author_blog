@@ -12,6 +12,7 @@ const contentDir = path.join(root, 'content');
 const postsDir = path.join(contentDir, 'posts');
 const authorsDir = path.join(contentDir, 'authors');
 const imagesDir = path.join(contentDir, 'images');
+const aboutDir = path.join(contentDir, 'about');
 const distDir = path.join(root, 'dist');
 const pageBackgrounds = {
   home: '',
@@ -22,6 +23,212 @@ const pageBackgrounds = {
   notFound: '/images/cover-build.svg'
 };
 const commentsConfigPath = path.join(srcDir, 'static', 'comments.json');
+
+const defaultLang = 'en';
+const languageConfig = {
+  en: {
+    code: 'en',
+    htmlLang: 'en',
+    giscusLang: 'en',
+    toggleLabel: '中文',
+    toggleAria: 'Switch to Chinese',
+    themeLabels: {
+      auto: 'Auto',
+      light: 'Light',
+      dark: 'Dark',
+      aria: 'Toggle theme'
+    },
+    nav: {
+      home: 'Home',
+      about: 'About',
+      authors: 'Authors',
+      categories: 'Categories',
+      search: 'Search'
+    },
+    home: {
+      title: 'Minimal personal website',
+      subtitle: 'Static · Templates and content separated · Cloudflare Pages ready',
+      aboutEntry: 'About',
+      latest: 'Latest Posts',
+      more: 'More...',
+      tags: 'Popular Topics',
+      noTags: 'No tags yet.'
+    },
+    about: {
+      fallbackTitle: 'About',
+      fallbackSubtitle: 'About me and this site',
+      fallbackDescription: 'About this personal website.',
+      fallbackBody: `<section>
+    <p>Hello, welcome to my personal site. It is fully static, with templates separated from content, ideal for long-term writing and hosting.</p>
+    <p>Create a folder under <code>content/posts</code> with <code>zh.md</code> and <code>en.md</code>, then run the build to publish.</p>
+  </section>`
+    },
+    authors: {
+      title: 'Authors',
+      subtitle: 'Author list and bios',
+      postsLabel: (count) => `${count} posts`
+    },
+    authorDetail: {
+      back: '← Back to authors',
+      postsTitle: 'Posts',
+      empty: 'This author has not published any posts yet.'
+    },
+    categories: {
+      title: 'Categories',
+      subtitle: 'Browse posts by category',
+      navTitle: 'Category index',
+      back: '← Back to categories',
+      count: (count) => `This category has ${count} posts`
+    },
+    posts: {
+      title: 'All Posts',
+      subtitle: 'All posts list',
+      empty: 'No posts yet.'
+    },
+    tags: {
+      back: '← Back to home',
+      count: (count) => `This tag has ${count} posts`
+    },
+    search: {
+      title: 'Search',
+      subtitle: 'Search titles, authors, categories, and content',
+      placeholder: 'Type to search titles, authors, categories, and content'
+    },
+    post: {
+      backHome: '← Back to home',
+      authorPrefix: 'Author: ',
+      lockedIntro: 'This post is locked. Enter the password to view the full content.',
+      passwordPlaceholder: 'Enter reading password',
+      unlock: 'Unlock',
+      unlocked: 'Unlocked.',
+      emptyPassword: 'Please enter a password.',
+      wrongPassword: 'Incorrect password. Please try again.',
+      unlockFail: 'Unlock failed. Please try again later.'
+    },
+    comments: {
+      title: 'Comments',
+      closed: 'Comments are closed.',
+      notConfigured: (missing) =>
+        `Comments are not fully configured. Please fill in: ${escapeHtml(missing.join(', '))} in <code>src/static/comments.json</code>.`,
+      loginHint: 'Sign in with GitHub to comment.',
+      quoteHint: 'Select text in the article to quote it in your comment.',
+      quoteButton: 'Quote comment',
+      quoteCopied: 'Quote copied. Paste it into the comment box.',
+      quoteCopiedTrimmed: 'Quote copied (truncated). Paste it into the comment box.',
+      quoteFailed: 'Copy failed. Please copy manually.'
+    },
+    errors: {
+      notFoundTitle: 'Page not found',
+      notFoundDesc: 'Page not found',
+      backHome: 'Back to home'
+    },
+    meta: {
+      tagCountTitle: (count) => `${count} posts`,
+      tagCountAria: (tag, count) => `${tag}, ${count} posts`
+    }
+  },
+  zh: {
+    code: 'zh',
+    htmlLang: 'zh-CN',
+    giscusLang: 'zh-CN',
+    toggleLabel: 'English',
+    toggleAria: '切换到英文',
+    themeLabels: {
+      auto: '自动',
+      light: '浅色',
+      dark: '深色',
+      aria: '切换主题'
+    },
+    nav: {
+      home: '首页',
+      about: '关于',
+      authors: '作者',
+      categories: '分类',
+      search: '搜索'
+    },
+    home: {
+      title: '简约个人网站',
+      subtitle: '全静态 · 模板与文章分离 · 支持 Cloudflare Pages',
+      aboutEntry: '关于我',
+      latest: '最新文章',
+      more: '更多.....',
+      tags: '热门主题',
+      noTags: '暂无分类标签。'
+    },
+    about: {
+      fallbackTitle: '关于',
+      fallbackSubtitle: '关于我与这个站点',
+      fallbackDescription: '关于这个个人网站。',
+      fallbackBody: `<section>
+    <p>你好，这里是我的个人站点。它采用纯静态方式构建，页面模板和文章内容分离，适合长期写作与托管。</p>
+    <p>你只需要在 <code>content/posts</code> 新建一个文件夹，准备 <code>zh.md</code> 与 <code>en.md</code> 并执行构建即可发布。</p>
+  </section>`
+    },
+    authors: {
+      title: '作者',
+      subtitle: '作者列表与简介',
+      postsLabel: (count) => `文章数：${count}`
+    },
+    authorDetail: {
+      back: '← 返回作者列表',
+      postsTitle: '文章',
+      empty: '这个作者还没有发布文章。'
+    },
+    categories: {
+      title: '分类',
+      subtitle: '按分类浏览文章',
+      navTitle: '标签索引',
+      back: '← 返回分类',
+      count: (count) => `该分类共 ${count} 篇文章`
+    },
+    posts: {
+      title: '全部文章',
+      subtitle: '全部文章列表',
+      empty: '暂无文章。'
+    },
+    tags: {
+      back: '← 返回主页',
+      count: (count) => `该标签共 ${count} 篇文章`
+    },
+    search: {
+      title: '搜索',
+      subtitle: '搜索标题、作者、分类和正文',
+      placeholder: '输入关键词搜索标题、作者、分类、正文'
+    },
+    post: {
+      backHome: '← 返回主页',
+      authorPrefix: '作者：',
+      lockedIntro: '这篇文章已上锁，请输入密码后查看全文。',
+      passwordPlaceholder: '输入阅读密码',
+      unlock: '解锁',
+      unlocked: '已解锁。',
+      emptyPassword: '请输入密码。',
+      wrongPassword: '密码错误，请重试。',
+      unlockFail: '解锁失败，请稍后再试。'
+    },
+    comments: {
+      title: '评论',
+      closed: '评论区已关闭。',
+      notConfigured: (missing) =>
+        `评论未配置完成，请在 <code>src/static/comments.json</code> 填写：${escapeHtml(missing.join(', '))}。`,
+      loginHint: '使用 GitHub 登录后发表评论。',
+      quoteHint: '选中文章内容后可点击“引用评论”。',
+      quoteButton: '引用评论',
+      quoteCopied: '已复制引用，请在评论框粘贴。',
+      quoteCopiedTrimmed: '已复制引用（内容过长已截断），请在评论框粘贴。',
+      quoteFailed: '复制失败，请手动复制。'
+    },
+    errors: {
+      notFoundTitle: '页面不存在',
+      notFoundDesc: '页面不存在',
+      backHome: '返回首页'
+    },
+    meta: {
+      tagCountTitle: (count) => `${count} 篇文章`,
+      tagCountAria: (tag, count) => `${tag}，${count} 篇文章`
+    }
+  }
+};
 
 function parseBoolean(value) {
   if (typeof value === 'boolean') return value;
@@ -35,6 +242,30 @@ function readJson(file, fallback = {}) {
   } catch (error) {
     return fallback;
   }
+}
+
+function getLangConfig(lang) {
+  return languageConfig[lang] || languageConfig[defaultLang];
+}
+
+function getBasePath(lang) {
+  return `/${lang}`;
+}
+
+function listFolders(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+}
+
+function readLocalizedMarkdown(dir, lang) {
+  const primary = path.join(dir, `${lang}.md`);
+  if (fs.existsSync(primary)) return read(primary);
+  const fallback = path.join(dir, `${defaultLang}.md`);
+  if (fs.existsSync(fallback)) return read(fallback);
+  return '';
 }
 
 function loadCommentsConfig() {
@@ -263,6 +494,41 @@ function renderLayoutPage(layout, pageVars, backgroundImage = '') {
   });
 }
 
+function loadAboutPage(lang) {
+  const raw = readLocalizedMarkdown(aboutDir, lang);
+  if (!raw) return null;
+  const parsed = parseFrontMatter(raw);
+  const ui = getLangConfig(lang);
+  const title = parsed.meta.title || ui.about.fallbackTitle;
+  const subtitle = parsed.meta.subtitle || parsed.meta.tagline || ui.about.fallbackSubtitle;
+  const description = parsed.meta.description || parsed.meta.desc || ui.about.fallbackDescription;
+  const pageTitle = parsed.meta.pageTitle || parsed.meta.metaTitle || `${title} | MyNotes`;
+  const background = parsed.meta.background || parsed.meta.bg || pageBackgrounds.about;
+  const heroEnabled = Object.prototype.hasOwnProperty.call(parsed.meta, 'hero')
+    ? parseBool(parsed.meta.hero)
+    : !parseBool(parsed.meta.hideHero);
+  const bodyHtml = markdownToHtml(parsed.body || '');
+  const sections = [];
+
+  if (heroEnabled) {
+    sections.push(`<section class="hero">
+    <h1>${escapeHtml(title)}</h1>
+    ${subtitle ? `<p class="meta">${escapeHtml(subtitle)}</p>` : ''}
+  </section>`);
+  }
+
+  if (bodyHtml.trim()) {
+    sections.push(`<section class="markdown-body">${bodyHtml}</section>`);
+  }
+
+  return {
+    pageTitle,
+    description,
+    content: sections.join('\n'),
+    background
+  };
+}
+
 function excerpt(text, length = 120) {
   const trimmed = String(text).replace(/\s+/g, ' ').trim();
   if (trimmed.length <= length) return trimmed;
@@ -306,11 +572,11 @@ function parseBool(value) {
   return ['1', 'true', 'yes', 'y', 'on'].includes(text);
 }
 
-function buildCommentsSection(config) {
+function buildCommentsSection(config, ui) {
   if (!config.enabled) {
     return `<section class="post-comments" id="comments">
-    <h2>评论</h2>
-    <p class="meta">评论区已关闭。</p>
+    <h2>${escapeHtml(ui.comments.title)}</h2>
+    <p class="meta">${escapeHtml(ui.comments.closed)}</p>
   </section>`;
   }
 
@@ -322,16 +588,16 @@ function buildCommentsSection(config) {
 
   if (missing.length) {
     return `<section class="post-comments" id="comments">
-    <h2>评论</h2>
-    <p class="meta">评论未配置完成，请在 <code>src/static/comments.json</code> 填写：${escapeHtml(missing.join(', '))}。</p>
+    <h2>${escapeHtml(ui.comments.title)}</h2>
+    <p class="meta">${ui.comments.notConfigured(missing)}</p>
   </section>`;
   }
 
   return `<section class="post-comments" id="comments" data-comments>
     <div class="comments-header">
-      <h2>评论</h2>
-      <p class="meta">使用 GitHub 登录后发表评论。</p>
-      <p class="comment-hint">选中文章内容后可点击“引用评论”。</p>
+      <h2>${escapeHtml(ui.comments.title)}</h2>
+      <p class="meta">${escapeHtml(ui.comments.loginHint)}</p>
+      <p class="comment-hint">${escapeHtml(ui.comments.quoteHint)}</p>
     </div>
     <div class="giscus-wrap">
       <script
@@ -353,13 +619,13 @@ function buildCommentsSection(config) {
       </script>
     </div>
     <div class="quote-bubble" data-quote-bubble aria-hidden="true">
-      <button class="quote-btn" type="button" data-quote-action>引用评论</button>
+      <button class="quote-btn" type="button" data-quote-action>${escapeHtml(ui.comments.quoteButton)}</button>
     </div>
     <div class="quote-toast" data-quote-toast role="status" aria-live="polite"></div>
   </section>`;
 }
 
-function buildCommentsScript(config) {
+function buildCommentsScript(config, ui) {
   if (!config.enabled) return '';
   if (!config.repo || !config.repoId || !config.category || !config.categoryId) return '';
 
@@ -456,9 +722,9 @@ function buildCommentsScript(config) {
           if (commentAnchor) {
             commentAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-          showToast(extra ? '已复制引用（内容过长已截断），请在评论框粘贴。' : '已复制引用，请在评论框粘贴。');
+          showToast(extra ? ${JSON.stringify(ui.comments.quoteCopiedTrimmed)} : ${JSON.stringify(ui.comments.quoteCopied)});
         } catch (error) {
-          showToast('复制失败，请手动复制。');
+          showToast(${JSON.stringify(ui.comments.quoteFailed)});
         }
       };
 
@@ -504,17 +770,19 @@ function hashPassword(text) {
   return createHash('sha256').update(String(text)).digest('hex');
 }
 
-function buildPosts() {
-  const files = fs.readdirSync(postsDir).filter((f) => f.endsWith('.md'));
+function buildPosts(lang) {
+  const folders = listFolders(postsDir);
   const posts = [];
 
-  for (const file of files) {
-    const abs = path.join(postsDir, file);
-    const parsed = parseFrontMatter(read(abs));
-    const title = parsed.meta.title || path.basename(file, '.md');
-    const slug = slugify(path.basename(file, '.md'));
+  for (const folder of folders) {
+    const absDir = path.join(postsDir, folder);
+    const raw = readLocalizedMarkdown(absDir, lang);
+    if (!raw) continue;
+    const parsed = parseFrontMatter(raw);
+    const title = parsed.meta.title || folder;
+    const slug = slugify(parsed.meta.slug || folder);
     const date = parsed.meta.date || '1970-01-01';
-    const category = parsed.meta.category || 'Uncategorized';
+    const category = parsed.meta.category || (lang === 'zh' ? '未分类' : 'Uncategorized');
     const tags = parseTagNames(parsed.meta);
     const cover = parsed.meta.cover || '';
     const summary = parsed.meta.summary || excerpt(parsed.body, 100);
@@ -549,19 +817,28 @@ function buildPosts() {
   return posts;
 }
 
-function buildAuthorProfiles() {
+function buildAuthorProfiles(lang) {
   if (!fs.existsSync(authorsDir)) return [];
 
-  const files = fs.readdirSync(authorsDir).filter((f) => f.endsWith('.md'));
-  return files.map((file) => {
-    const abs = path.join(authorsDir, file);
-    const parsed = parseFrontMatter(read(abs));
-    const fallbackName = path.basename(file, '.md');
+  const folders = listFolders(authorsDir);
+  return folders.map((folder) => {
+    const absDir = path.join(authorsDir, folder);
+    const raw = readLocalizedMarkdown(absDir, lang);
+    if (!raw) {
+      return null;
+    }
+    const parsed = parseFrontMatter(raw);
+    const fallbackName = folder;
     const name = parsed.meta.name || fallbackName;
     const slug = parsed.meta.slug || slugify(name) || slugify(fallbackName) || 'author';
     const headline = parsed.meta.headline || '';
-    const summary = parsed.meta.summary || excerpt(parsed.body, 90) || `${name} 的介绍`;
-    const bioHtml = markdownToHtml(parsed.body || `关于 ${name} 的介绍暂未补充。`);
+    const summary =
+      parsed.meta.summary ||
+      excerpt(parsed.body, 90) ||
+      (lang === 'zh' ? `${name} 的介绍` : `Introduction to ${name}`);
+    const bioHtml = markdownToHtml(
+      parsed.body || (lang === 'zh' ? `关于 ${name} 的介绍暂未补充。` : `About ${name} will be added soon.`)
+    );
     const background = parsed.meta.background || parsed.meta.bg || '';
 
     return {
@@ -572,10 +849,10 @@ function buildAuthorProfiles() {
       bioHtml,
       background
     };
-  });
+  }).filter(Boolean);
 }
 
-function linkAuthors(posts, profileList) {
+function linkAuthors(posts, profileList, locale = 'en') {
   const map = new Map();
   const authors = [];
   const usedSlugs = new Set();
@@ -629,13 +906,17 @@ function linkAuthors(posts, profileList) {
     post.authorText = resolved.map((a) => a.name).join(' / ');
   }
 
-  authors.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  const sortLocale = locale === 'zh' ? 'zh-Hans-CN' : 'en';
+  authors.sort((a, b) => a.name.localeCompare(b.name, sortLocale));
   return authors;
 }
 
-function renderAuthorLinks(authors) {
+function renderAuthorLinks(authors, basePath) {
   return authors
-    .map((author) => `<a class="author-link" href="/authors/${escapeHtml(author.slug)}/">${escapeHtml(author.name)}</a>`)
+    .map(
+      (author) =>
+        `<a class="author-link" href="${basePath}/authors/${escapeHtml(author.slug)}/">${escapeHtml(author.name)}</a>`
+    )
     .join('<span class="meta-sep">/</span>');
 }
 
@@ -643,7 +924,7 @@ function detectLang(text) {
   return /[\u4e00-\u9fff]/.test(text) ? 'zh' : 'en';
 }
 
-function renderPostMeta(post, options = {}) {
+function renderPostMeta(post, basePath, options = {}) {
   const { hideCategory = false, hideTag = '' } = options;
   const categorySlug = slugify(post.category) || 'category';
   const categoryLabel = `<span class="tag-label" lang="${detectLang(post.category)}">${escapeHtml(
@@ -651,28 +932,31 @@ function renderPostMeta(post, options = {}) {
   )}</span>`;
   const categoryChip = hideCategory
     ? ''
-    : `<a class="tag tag-primary" href="/categories/${escapeHtml(categorySlug)}/">${categoryLabel}</a>`;
+    : `<a class="tag tag-primary" href="${basePath}/categories/${escapeHtml(categorySlug)}/">${categoryLabel}</a>`;
   const tagChips = post.tags.length
     ? `<span class="tag-list">${post.tags
         .filter((tag) => tag !== hideTag)
         .map((tag) => {
           const slug = slugify(tag) || 'tag';
           const tagLabel = `<span class="tag-label" lang="${detectLang(tag)}">#${escapeHtml(tag)}</span>`;
-          return `<a class="tag tag-secondary" href="/tags/${escapeHtml(slug)}/">${tagLabel}</a>`;
+          return `<a class="tag tag-secondary" href="${basePath}/tags/${escapeHtml(slug)}/">${tagLabel}</a>`;
         })
         .join('')}</span>`
     : '';
-  return `<div class="post-meta-row"><span class="meta-left">${escapeHtml(post.date)} · ${renderAuthorLinks(post.authors)}</span><span class="meta-right">${categoryChip}${tagChips}</span></div>`;
+  return `<div class="post-meta-row"><span class="meta-left">${escapeHtml(post.date)} · ${renderAuthorLinks(
+    post.authors,
+    basePath
+  )}</span><span class="meta-right">${categoryChip}${tagChips}</span></div>`;
 }
 
-function renderPostCard(post, includeSummary = true, metaOptions = {}) {
-  return `<li class="post-card" data-href="/posts/${post.slug}/" role="link" tabindex="0">
+function renderPostCard(post, basePath, includeSummary = true, metaOptions = {}) {
+  return `<li class="post-card" data-href="${basePath}/posts/${post.slug}/" role="link" tabindex="0">
     <div class="post-card__inner">
       <div class="post-cover-wrap">
         ${coverImage(post.cover, 'post-cover', `${post.title} cover`)}
       </div>
       <div class="post-main">
-        <div class="meta post-meta">${renderPostMeta(post, metaOptions)}</div>
+        <div class="meta post-meta">${renderPostMeta(post, basePath, metaOptions)}</div>
         <h2 class="post-card-title">${escapeHtml(post.title)}</h2>
         ${includeSummary ? `<p class="post-excerpt">${escapeHtml(post.summary)}</p>` : ''}
       </div>
@@ -680,14 +964,21 @@ function renderPostCard(post, includeSummary = true, metaOptions = {}) {
   </li>`;
 }
 
-function buildSite(posts, authors) {
+function buildSite(posts, authors, lang) {
   const layout = read(path.join(srcDir, 'templates', 'layout.html'));
   const postTpl = read(path.join(srcDir, 'templates', 'post.html'));
   const year = new Date().getFullYear();
-  const commentsConfig = loadCommentsConfig();
+  const ui = getLangConfig(lang);
+  const basePath = getBasePath(lang);
+  const outputDir = path.join(distDir, lang);
+  const sortLocale = ui.code === 'zh' ? 'zh-Hans-CN' : 'en';
+  const commentsConfig = {
+    ...loadCommentsConfig(),
+    lang: ui.giscusLang || 'en'
+  };
   const publicPosts = posts.filter((post) => !post.hidden);
   const latestPosts = publicPosts.slice(0, 3);
-  const postList = latestPosts.map((post) => renderPostCard(post, true)).join('');
+  const postList = latestPosts.map((post) => renderPostCard(post, basePath, true)).join('');
 
   const tagCounts = publicPosts.reduce((acc, post) => {
     for (const tag of post.tags) {
@@ -700,66 +991,90 @@ function buildSite(posts, authors) {
   const maxCount = Math.max(1, ...countValues);
   const minCount = Math.min(maxCount, ...countValues);
   const tagCloudItems = tagEntries
-    .sort((a, b) => a[0].localeCompare(b[0], 'zh-Hans-CN'))
+    .sort((a, b) => a[0].localeCompare(b[0], sortLocale))
     .map(([tag, count]) => {
       const weight = maxCount === minCount ? 0.5 : (count - minCount) / (maxCount - minCount);
       const slug = slugify(tag) || 'category';
-      return `<a class="tag-cloud-item" href="/tags/${escapeHtml(slug)}/" style="--tag-weight:${weight.toFixed(
+      return `<a class="tag-cloud-item" href="${basePath}/tags/${escapeHtml(slug)}/" style="--tag-weight:${weight.toFixed(
         2
-      )}" title="${escapeHtml(`${count} 篇文章`)}" aria-label="${escapeHtml(`${tag}，${count} 篇文章`)}"><span>${escapeHtml(
-        tag
-      )}</span></a>`;
+      )}" title="${escapeHtml(ui.meta.tagCountTitle(count))}" aria-label="${escapeHtml(
+        ui.meta.tagCountAria(tag, count)
+      )}"><span>${escapeHtml(tag)}</span></a>`;
     })
     .join('');
 
   const indexContent = `<section class="hero">
-    <h1>简约个人网站</h1>
-    <p class="meta">全静态 · 模板与文章分离 · 支持 Cloudflare Pages</p>
-    <p><a class="about-entry" href="/about/">关于我</a></p>
+    <h1>${escapeHtml(ui.home.title)}</h1>
+    <p class="meta">${escapeHtml(ui.home.subtitle)}</p>
+    <p><a class="about-entry" href="${basePath}/about/">${escapeHtml(ui.home.aboutEntry)}</a></p>
   </section>
-  <h2 class="section-title">最新文章</h2>
+  <h2 class="section-title">${escapeHtml(ui.home.latest)}</h2>
   <ul class="post-list">${postList}</ul>
-  <p class="section-more"><a class="more-link" href="/posts/">更多.....</a></p>
+  <p class="section-more"><a class="more-link" href="${basePath}/posts/">${escapeHtml(ui.home.more)}</a></p>
   <section class="tag-cloud-section">
-    <h2>热门主题</h2>
+    <h2>${escapeHtml(ui.home.tags)}</h2>
     <div class="tag-cloud-shell">
-      <div class="tag-cloud">${tagCloudItems || '<p class="meta">暂无分类标签。</p>'}</div>
+      <div class="tag-cloud">${tagCloudItems || `<p class="meta">${escapeHtml(ui.home.noTags)}</p>`}</div>
     </div>
   </section>`;
 
   const indexHtml = renderLayoutPage(
     layout,
     {
-      title: 'Home | MyNotes',
-      description: 'A minimal personal static website.',
+      title: `${ui.nav.home} | MyNotes`,
+      description: ui.about.fallbackDescription,
       content: indexContent,
       year,
-      bodyClass: 'home-page'
+      bodyClass: 'home-page',
+      lang: ui.htmlLang,
+      basePath,
+      navHome: ui.nav.home,
+      navAbout: ui.nav.about,
+      navAuthors: ui.nav.authors,
+      navCategories: ui.nav.categories,
+      navSearch: ui.nav.search,
+      langToggleLabel: ui.toggleLabel,
+      langToggleAria: ui.toggleAria,
+      themeToggleAria: ui.themeLabels.aria,
+      themeLabelAuto: ui.themeLabels.auto,
+      themeLabelLight: ui.themeLabels.light,
+      themeLabelDark: ui.themeLabels.dark
     },
     pageBackgrounds.home
   );
-  write(path.join(distDir, 'index.html'), indexHtml);
+  write(path.join(outputDir, 'index.html'), indexHtml);
 
-  const aboutContent = `<section class="hero">
-    <h1>About</h1>
-    <p class="meta">关于我与这个站点</p>
+  const aboutPage = loadAboutPage(lang);
+  const aboutFallbackContent = `<section class="hero">
+    <h1>${escapeHtml(ui.about.fallbackTitle)}</h1>
+    <p class="meta">${escapeHtml(ui.about.fallbackSubtitle)}</p>
   </section>
-  <section>
-    <p>你好，这里是我的个人站点。它采用纯静态方式构建，页面模板和文章内容分离，适合长期写作与托管。</p>
-    <p>你只需要在 <code>content/posts</code> 新增一篇 Markdown 文件并执行构建即可发布。</p>
-  </section>`;
+  ${ui.about.fallbackBody}`;
 
   write(
-    path.join(distDir, 'about', 'index.html'),
+    path.join(outputDir, 'about', 'index.html'),
     renderLayoutPage(
       layout,
       {
-        title: 'About | MyNotes',
-        description: 'About this personal website.',
-        content: aboutContent,
-        year
+        title: aboutPage?.pageTitle || `${ui.nav.about} | MyNotes`,
+        description: aboutPage?.description || ui.about.fallbackDescription,
+        content: aboutPage?.content || aboutFallbackContent,
+        year,
+        lang: ui.htmlLang,
+        basePath,
+        navHome: ui.nav.home,
+        navAbout: ui.nav.about,
+        navAuthors: ui.nav.authors,
+        navCategories: ui.nav.categories,
+        navSearch: ui.nav.search,
+        langToggleLabel: ui.toggleLabel,
+        langToggleAria: ui.toggleAria,
+        themeToggleAria: ui.themeLabels.aria,
+        themeLabelAuto: ui.themeLabels.auto,
+        themeLabelLight: ui.themeLabels.light,
+        themeLabelDark: ui.themeLabels.dark
       },
-      pageBackgrounds.about
+      aboutPage?.background || pageBackgrounds.about
     )
   );
 
@@ -767,23 +1082,38 @@ function buildSite(posts, authors) {
     .map((author) => {
       const count = publicPosts.filter((post) => post.authors.some((item) => item.slug === author.slug)).length;
       return `<li class="author-card">
-        <h2 class="author-name"><a class="author-link" href="/authors/${escapeHtml(author.slug)}/">${escapeHtml(author.name)}</a></h2>
+        <h2 class="author-name"><a class="author-link" href="${basePath}/authors/${escapeHtml(author.slug)}/">${escapeHtml(author.name)}</a></h2>
         ${author.headline ? `<p class="meta">${escapeHtml(author.headline)}</p>` : ''}
         <p>${escapeHtml(author.summary)}</p>
-        <p class="meta">文章数：${count}</p>
+        <p class="meta">${escapeHtml(ui.authors.postsLabel(count))}</p>
       </li>`;
     })
     .join('');
 
   write(
-    path.join(distDir, 'authors', 'index.html'),
+    path.join(outputDir, 'authors', 'index.html'),
     renderLayoutPage(
       layout,
       {
-        title: 'Authors | MyNotes',
-        description: 'Author profile list',
-        content: `<section class="hero"><h1>Authors</h1><p class="meta">作者列表与简介</p></section><ul class="author-grid">${authorCards}</ul>`,
-        year
+        title: `${ui.nav.authors} | MyNotes`,
+        description: ui.authors.subtitle,
+        content: `<section class="hero"><h1>${escapeHtml(ui.authors.title)}</h1><p class="meta">${escapeHtml(
+          ui.authors.subtitle
+        )}</p></section><ul class="author-grid">${authorCards}</ul>`,
+        year,
+        lang: ui.htmlLang,
+        basePath,
+        navHome: ui.nav.home,
+        navAbout: ui.nav.about,
+        navAuthors: ui.nav.authors,
+        navCategories: ui.nav.categories,
+        navSearch: ui.nav.search,
+        langToggleLabel: ui.toggleLabel,
+        langToggleAria: ui.toggleAria,
+        themeToggleAria: ui.themeLabels.aria,
+        themeLabelAuto: ui.themeLabels.auto,
+        themeLabelLight: ui.themeLabels.light,
+        themeLabelDark: ui.themeLabels.dark
       },
       pageBackgrounds.authors
     )
@@ -792,31 +1122,44 @@ function buildSite(posts, authors) {
   for (const author of authors) {
     const authoredPosts = publicPosts.filter((post) => post.authors.some((item) => item.slug === author.slug));
     const authoredList = authoredPosts.length
-      ? `<ul class="post-list">${authoredPosts.map((post) => renderPostCard(post, true)).join('')}</ul>`
-      : '<p class="meta">这个作者还没有发布文章。</p>';
+      ? `<ul class="post-list">${authoredPosts.map((post) => renderPostCard(post, basePath, true)).join('')}</ul>`
+      : `<p class="meta">${escapeHtml(ui.authorDetail.empty)}</p>`;
 
     const authorContent = `<section class="author-detail-header">
       <div class="author-detail-row">
         <h1>${escapeHtml(author.name)}</h1>
-        <a class="home-btn" href="/authors/">← 返回作者列表</a>
+        <a class="home-btn" href="${basePath}/authors/">${escapeHtml(ui.authorDetail.back)}</a>
       </div>
       ${author.headline ? `<p class="meta">${escapeHtml(author.headline)}</p>` : ''}
       <section class="markdown-body">${author.bioHtml}</section>
     </section>
     <section>
-      <h2>文章</h2>
+      <h2>${escapeHtml(ui.authorDetail.postsTitle)}</h2>
       ${authoredList}
     </section>`;
 
     write(
-      path.join(distDir, 'authors', author.slug, 'index.html'),
+      path.join(outputDir, 'authors', author.slug, 'index.html'),
       renderLayoutPage(
         layout,
         {
           title: `${escapeHtml(author.name)} | MyNotes`,
           description: escapeHtml(author.summary),
           content: authorContent,
-          year
+          year,
+          lang: ui.htmlLang,
+          basePath,
+          navHome: ui.nav.home,
+          navAbout: ui.nav.about,
+          navAuthors: ui.nav.authors,
+          navCategories: ui.nav.categories,
+          navSearch: ui.nav.search,
+          langToggleLabel: ui.toggleLabel,
+          langToggleAria: ui.toggleAria,
+          themeToggleAria: ui.themeLabels.aria,
+          themeLabelAuto: ui.themeLabels.auto,
+          themeLabelLight: ui.themeLabels.light,
+          themeLabelDark: ui.themeLabels.dark
         },
         author.background
       )
@@ -839,16 +1182,16 @@ function buildSite(posts, authors) {
   }, {});
 
   const categoryBlocks = Object.entries(grouped)
-    .sort(([a], [b]) => a.localeCompare(b, 'zh-Hans-CN'))
+    .sort(([a], [b]) => a.localeCompare(b, sortLocale))
     .map(([cat, items]) => {
-      const links = items.map((post) => renderPostCard(post, false, { hideCategory: true })).join('');
+      const links = items.map((post) => renderPostCard(post, basePath, false, { hideCategory: true })).join('');
       const slug = slugify(cat) || 'category';
       return `<section id="cat-${escapeHtml(slug)}"><h2>${escapeHtml(cat)}</h2><ul class="post-list">${links}</ul></section>`;
     })
     .join('');
 
   const categoryNav = Object.entries(grouped)
-    .sort(([a], [b]) => a.localeCompare(b, 'zh-Hans-CN'))
+    .sort(([a], [b]) => a.localeCompare(b, sortLocale))
     .map(([cat, items]) => {
       const slug = slugify(cat) || 'category';
       return `<a class="category-nav-item" href="#cat-${escapeHtml(slug)}"><span>${escapeHtml(cat)}</span><span class="meta">${items.length}</span></a>`;
@@ -856,37 +1199,67 @@ function buildSite(posts, authors) {
     .join('');
 
   write(
-    path.join(distDir, 'categories', 'index.html'),
+    path.join(outputDir, 'categories', 'index.html'),
     renderLayoutPage(
       layout,
       {
-        title: 'Category | MyNotes',
-        description: 'Post categories',
-        content: `<section class="hero"><h1>Category</h1><p class="meta">按分类浏览文章</p></section><div class="category-page"><aside class="category-sidebar"><h3>标签索引</h3><nav class="category-nav">${categoryNav}</nav></aside><div class="category-content">${categoryBlocks}</div></div>`,
-        year
+        title: `${ui.nav.categories} | MyNotes`,
+        description: ui.categories.subtitle,
+        content: `<section class="hero"><h1>${escapeHtml(ui.categories.title)}</h1><p class="meta">${escapeHtml(
+          ui.categories.subtitle
+        )}</p></section><div class="category-page"><aside class="category-sidebar"><h3>${escapeHtml(
+          ui.categories.navTitle
+        )}</h3><nav class="category-nav">${categoryNav}</nav></aside><div class="category-content">${categoryBlocks}</div></div>`,
+        year,
+        lang: ui.htmlLang,
+        basePath,
+        navHome: ui.nav.home,
+        navAbout: ui.nav.about,
+        navAuthors: ui.nav.authors,
+        navCategories: ui.nav.categories,
+        navSearch: ui.nav.search,
+        langToggleLabel: ui.toggleLabel,
+        langToggleAria: ui.toggleAria,
+        themeToggleAria: ui.themeLabels.aria,
+        themeLabelAuto: ui.themeLabels.auto,
+        themeLabelLight: ui.themeLabels.light,
+        themeLabelDark: ui.themeLabels.dark
       },
       pageBackgrounds.categories
     )
   );
 
-  const allPostList = publicPosts.map((post) => renderPostCard(post, true)).join('');
+  const allPostList = publicPosts.map((post) => renderPostCard(post, basePath, true)).join('');
   const allPostsContent = `<section class="hero">
-    <h1>All Posts</h1>
-    <p class="meta">全部文章列表</p>
+    <h1>${escapeHtml(ui.posts.title)}</h1>
+    <p class="meta">${escapeHtml(ui.posts.subtitle)}</p>
   </section>
   <section>
-    ${allPostList ? `<ul class="post-list">${allPostList}</ul>` : '<p class="meta">暂无文章。</p>'}
+    ${allPostList ? `<ul class="post-list">${allPostList}</ul>` : `<p class="meta">${escapeHtml(ui.posts.empty)}</p>`}
   </section>`;
 
   write(
-    path.join(distDir, 'posts', 'index.html'),
+    path.join(outputDir, 'posts', 'index.html'),
     renderLayoutPage(
       layout,
       {
-        title: 'Posts | MyNotes',
-        description: 'All posts list',
+        title: `${ui.posts.title} | MyNotes`,
+        description: ui.posts.subtitle,
         content: allPostsContent,
-        year
+        year,
+        lang: ui.htmlLang,
+        basePath,
+        navHome: ui.nav.home,
+        navAbout: ui.nav.about,
+        navAuthors: ui.nav.authors,
+        navCategories: ui.nav.categories,
+        navSearch: ui.nav.search,
+        langToggleLabel: ui.toggleLabel,
+        langToggleAria: ui.toggleAria,
+        themeToggleAria: ui.themeLabels.aria,
+        themeLabelAuto: ui.themeLabels.auto,
+        themeLabelLight: ui.themeLabels.light,
+        themeLabelDark: ui.themeLabels.dark
       },
       pageBackgrounds.home
     )
@@ -894,25 +1267,38 @@ function buildSite(posts, authors) {
 
   for (const [cat, items] of Object.entries(grouped)) {
     const slug = slugify(cat) || 'category';
-    const links = items.map((post) => renderPostCard(post, true, { hideCategory: true })).join('');
+    const links = items.map((post) => renderPostCard(post, basePath, true, { hideCategory: true })).join('');
     const categoryContent = `<section class="hero">
-      <a class="home-btn" href="/categories/">← 返回分类</a>
+      <a class="home-btn" href="${basePath}/categories/">${escapeHtml(ui.categories.back)}</a>
       <h1>${escapeHtml(cat)}</h1>
-      <p class="meta">该分类共 ${items.length} 篇文章</p>
+      <p class="meta">${escapeHtml(ui.categories.count(items.length))}</p>
     </section>
     <section>
-      ${items.length ? `<ul class="post-list">${links}</ul>` : '<p class="meta">暂无文章。</p>'}
+      ${items.length ? `<ul class="post-list">${links}</ul>` : `<p class="meta">${escapeHtml(ui.posts.empty)}</p>`}
     </section>`;
 
     write(
-      path.join(distDir, 'categories', slug, 'index.html'),
+      path.join(outputDir, 'categories', slug, 'index.html'),
       renderLayoutPage(
         layout,
         {
           title: `${escapeHtml(cat)} | MyNotes`,
-          description: `${escapeHtml(cat)} 分类下的文章`,
+          description: ui.categories.count(items.length),
           content: categoryContent,
-          year
+          year,
+          lang: ui.htmlLang,
+          basePath,
+          navHome: ui.nav.home,
+          navAbout: ui.nav.about,
+          navAuthors: ui.nav.authors,
+          navCategories: ui.nav.categories,
+          navSearch: ui.nav.search,
+          langToggleLabel: ui.toggleLabel,
+          langToggleAria: ui.toggleAria,
+          themeToggleAria: ui.themeLabels.aria,
+          themeLabelAuto: ui.themeLabels.auto,
+          themeLabelLight: ui.themeLabels.light,
+          themeLabelDark: ui.themeLabels.dark
         },
         pageBackgrounds.categories
       )
@@ -921,25 +1307,38 @@ function buildSite(posts, authors) {
 
   for (const [tag, items] of Object.entries(tagGrouped)) {
     const slug = slugify(tag) || 'category';
-    const links = items.map((post) => renderPostCard(post, true, { hideTag: tag })).join('');
+    const links = items.map((post) => renderPostCard(post, basePath, true, { hideTag: tag })).join('');
     const tagContent = `<section class="hero">
-      <a class="home-btn" href="/">← 返回主页</a>
+      <a class="home-btn" href="${basePath}/">${escapeHtml(ui.tags.back)}</a>
       <h1>${escapeHtml(tag)}</h1>
-      <p class="meta">该标签共 ${items.length} 篇文章</p>
+      <p class="meta">${escapeHtml(ui.tags.count(items.length))}</p>
     </section>
     <section>
-      ${items.length ? `<ul class="post-list">${links}</ul>` : '<p class="meta">暂无文章。</p>'}
+      ${items.length ? `<ul class="post-list">${links}</ul>` : `<p class="meta">${escapeHtml(ui.posts.empty)}</p>`}
     </section>`;
 
     write(
-      path.join(distDir, 'tags', slug, 'index.html'),
+      path.join(outputDir, 'tags', slug, 'index.html'),
       renderLayoutPage(
         layout,
         {
           title: `${escapeHtml(tag)} | MyNotes`,
-          description: `${escapeHtml(tag)} 标签下的文章`,
+          description: ui.tags.count(items.length),
           content: tagContent,
-          year
+          year,
+          lang: ui.htmlLang,
+          basePath,
+          navHome: ui.nav.home,
+          navAbout: ui.nav.about,
+          navAuthors: ui.nav.authors,
+          navCategories: ui.nav.categories,
+          navSearch: ui.nav.search,
+          langToggleLabel: ui.toggleLabel,
+          langToggleAria: ui.toggleAria,
+          themeToggleAria: ui.themeLabels.aria,
+          themeLabelAuto: ui.themeLabels.auto,
+          themeLabelLight: ui.themeLabels.light,
+          themeLabelDark: ui.themeLabels.dark
         },
         pageBackgrounds.categories
       )
@@ -947,16 +1346,18 @@ function buildSite(posts, authors) {
   }
 
   const searchContent = `<section class="hero">
-    <h1>Search</h1>
-    <p class="meta">搜索标题、作者、分类和正文</p>
+    <h1>${escapeHtml(ui.search.title)}</h1>
+    <p class="meta">${escapeHtml(ui.search.subtitle)}</p>
   </section>
   <section>
-    <input id="q" class="search-input" type="search" placeholder="输入关键词搜索标题、作者、分类、正文" />
+    <input id="q" class="search-input" type="search" placeholder="${escapeHtml(ui.search.placeholder)}" />
     <ul id="result" class="post-list"></ul>
   </section>
   <script>
     const q = document.getElementById('q');
     const result = document.getElementById('result');
+    const basePath = ${JSON.stringify(basePath)};
+    const postsIndexPath = ${JSON.stringify(`/assets/posts.${lang}.json`)};
 
     function esc(value) {
       return String(value)
@@ -969,7 +1370,7 @@ function buildSite(posts, authors) {
 
     function renderAuthorLinks(authors) {
       return authors
-        .map((author) => '<a class="author-link" href="/authors/' + esc(author.slug) + '/">' + esc(author.name) + '</a>')
+        .map((author) => '<a class="author-link" href="' + basePath + '/authors/' + esc(author.slug) + '/">' + esc(author.name) + '</a>')
         .join('<span class="meta-sep">/</span>');
     }
 
@@ -977,7 +1378,7 @@ function buildSite(posts, authors) {
       return String(input)
         .toLowerCase()
         .trim()
-        .replace(/[^a-z0-9\u4e00-\u9fa5]+/gi, '-')
+        .replace(/[^a-z0-9\\u4e00-\\u9fa5]+/gi, '-')
         .replace(/(^-|-$)/g, '');
     }
 
@@ -988,23 +1389,23 @@ function buildSite(posts, authors) {
     function renderMeta(post) {
       const categorySlug = slugifyText(post.category) || 'category';
       const categoryLabel = '<span class="tag-label" lang="' + detectLang(post.category) + '">' + esc(post.category) + '</span>';
-      const categoryChip = '<a class="tag tag-primary" href="/categories/' + esc(categorySlug) + '/">' + categoryLabel + '</a>';
+      const categoryChip = '<a class="tag tag-primary" href="' + basePath + '/categories/' + esc(categorySlug) + '/">' + categoryLabel + '</a>';
       const tags = (post.tags || []).map((tag) => {
         const slug = slugifyText(tag) || 'tag';
         const tagLabel = '<span class="tag-label" lang="' + detectLang(tag) + '">#' + esc(tag) + '</span>';
-        return '<a class="tag tag-secondary" href="/tags/' + esc(slug) + '/">' + tagLabel + '</a>';
+        return '<a class="tag tag-secondary" href="' + basePath + '/tags/' + esc(slug) + '/">' + tagLabel + '</a>';
       }).join('');
       const tagList = tags ? '<span class="tag-list">' + tags + '</span>' : '';
       return '<div class="post-meta-row"><span class="meta-left">' + esc(post.date) + ' · ' + renderAuthorLinks(post.authors) + '</span><span class="meta-right">' + categoryChip + tagList + '</span></div>';
     }
 
     async function load() {
-      const res = await fetch('/assets/posts.json');
+      const res = await fetch(postsIndexPath);
       const posts = await res.json();
 
       const render = (list) => {
         result.innerHTML = list.map((post) =>
-          '<li class="post-card" data-href="/posts/' + post.slug + '/" role="link" tabindex="0">' +
+          '<li class="post-card" data-href="' + basePath + '/posts/' + post.slug + '/" role="link" tabindex="0">' +
             (post.cover ? '<img class="post-cover" src="' + esc(post.cover) + '" alt="' + esc(post.title) + ' cover" loading="lazy" />' : '') +
             '<div class="post-main">' +
               '<p class="meta post-meta">' + renderMeta(post) + '</p>' +
@@ -1038,14 +1439,27 @@ function buildSite(posts, authors) {
   </script>`;
 
   write(
-    path.join(distDir, 'search', 'index.html'),
+    path.join(outputDir, 'search', 'index.html'),
     renderLayoutPage(
       layout,
       {
-        title: 'Search | MyNotes',
-        description: 'Search posts',
+        title: `${ui.search.title} | MyNotes`,
+        description: ui.search.subtitle,
         content: searchContent,
-        year
+        year,
+        lang: ui.htmlLang,
+        basePath,
+        navHome: ui.nav.home,
+        navAbout: ui.nav.about,
+        navAuthors: ui.nav.authors,
+        navCategories: ui.nav.categories,
+        navSearch: ui.nav.search,
+        langToggleLabel: ui.toggleLabel,
+        langToggleAria: ui.toggleAria,
+        themeToggleAria: ui.themeLabels.aria,
+        themeLabelAuto: ui.themeLabels.auto,
+        themeLabelLight: ui.themeLabels.light,
+        themeLabelDark: ui.themeLabels.dark
       },
       pageBackgrounds.search
     )
@@ -1055,10 +1469,12 @@ function buildSite(posts, authors) {
     const isLocked = Boolean(post.lockHash);
     const lockPanel = isLocked
       ? `<section class="post-lock" data-post-lock data-lock-hash="${post.lockHash}" data-post-key="${escapeHtml(post.slug)}">
-      <p class="meta">这篇文章已上锁，请输入密码后查看全文。</p>
+      <p class="meta">${escapeHtml(ui.post.lockedIntro)}</p>
       <div class="post-lock-form">
-        <input class="post-lock-input" type="password" autocomplete="current-password" placeholder="输入阅读密码" />
-        <button class="post-lock-btn" type="button">解锁</button>
+        <input class="post-lock-input" type="password" autocomplete="current-password" placeholder="${escapeHtml(
+          ui.post.passwordPlaceholder
+        )}" />
+        <button class="post-lock-btn" type="button">${escapeHtml(ui.post.unlock)}</button>
       </div>
       <p class="post-lock-msg" aria-live="polite"></p>
     </section>`
@@ -1085,7 +1501,7 @@ function buildSite(posts, authors) {
         const unlockView = () => {
           content.classList.remove('is-locked');
           lockRoot.classList.add('is-unlocked');
-          if (message) message.textContent = '已解锁。';
+          if (message) message.textContent = ${JSON.stringify(ui.post.unlocked)};
           if (sessionKey) sessionStorage.setItem(sessionKey, '1');
         };
 
@@ -1099,7 +1515,7 @@ function buildSite(posts, authors) {
           if (!input || !message) return;
           const password = input.value.trim();
           if (!password) {
-            message.textContent = '请输入密码。';
+            message.textContent = ${JSON.stringify(ui.post.emptyPassword)};
             return;
           }
           button.disabled = true;
@@ -1108,10 +1524,10 @@ function buildSite(posts, authors) {
             if (actualHash === expectedHash) {
               unlockView();
             } else {
-              message.textContent = '密码错误，请重试。';
+              message.textContent = ${JSON.stringify(ui.post.wrongPassword)};
             }
           } catch (error) {
-            message.textContent = '解锁失败，请稍后再试。';
+            message.textContent = ${JSON.stringify(ui.post.unlockFail)};
           } finally {
             button.disabled = false;
           }
@@ -1138,14 +1554,16 @@ function buildSite(posts, authors) {
     const content = template(postTpl, {
       title: escapeHtml(post.title),
       metaHtml: isLocked
-        ? `<div class="post-meta-row">作者：${renderAuthorLinks(post.authors)}</div>`
-        : renderPostMeta(post),
+        ? `<div class="post-meta-row">${escapeHtml(ui.post.authorPrefix)}${renderAuthorLinks(post.authors, basePath)}</div>`
+        : renderPostMeta(post, basePath),
       lockPanel,
       contentClass: isLocked ? 'is-locked' : '',
       content: post.html,
       lockScript,
-      commentsSection: buildCommentsSection(commentsConfig),
-      commentsScript: buildCommentsScript(commentsConfig)
+      commentsSection: buildCommentsSection(commentsConfig, ui),
+      commentsScript: buildCommentsScript(commentsConfig, ui),
+      backHomeHref: `${basePath}/`,
+      backHomeLabel: escapeHtml(ui.post.backHome)
     });
 
     const html = renderLayoutPage(
@@ -1154,30 +1572,62 @@ function buildSite(posts, authors) {
         title: `${escapeHtml(post.title)} | MyNotes`,
         description: escapeHtml(post.summary),
         content,
-        year
+        year,
+        lang: ui.htmlLang,
+        basePath,
+        navHome: ui.nav.home,
+        navAbout: ui.nav.about,
+        navAuthors: ui.nav.authors,
+        navCategories: ui.nav.categories,
+        navSearch: ui.nav.search,
+        langToggleLabel: ui.toggleLabel,
+        langToggleAria: ui.toggleAria,
+        themeToggleAria: ui.themeLabels.aria,
+        themeLabelAuto: ui.themeLabels.auto,
+        themeLabelLight: ui.themeLabels.light,
+        themeLabelDark: ui.themeLabels.dark
       },
       post.background
     );
 
-    write(path.join(distDir, 'posts', post.slug, 'index.html'), html);
+    write(path.join(outputDir, 'posts', post.slug, 'index.html'), html);
   }
 
+  const notFoundLink = `<a href="${basePath}/">${escapeHtml(ui.errors.backHome)}</a>`;
+  const notFoundMessage =
+    ui.code === 'zh'
+      ? `${escapeHtml(ui.errors.notFoundTitle)}，${notFoundLink}。`
+      : `${escapeHtml(ui.errors.notFoundTitle)}. ${notFoundLink}.`;
+
   write(
-    path.join(distDir, '404.html'),
+    path.join(outputDir, '404.html'),
     renderLayoutPage(
       layout,
       {
         title: '404 | MyNotes',
-        description: 'Page not found',
-        content: '<h1>404</h1><p>页面不存在，返回 <a href="/">首页</a>。</p>',
-        year
+        description: ui.errors.notFoundDesc,
+        content: `<h1>404</h1><p>${notFoundMessage}</p>`,
+        year,
+        lang: ui.htmlLang,
+        basePath,
+        navHome: ui.nav.home,
+        navAbout: ui.nav.about,
+        navAuthors: ui.nav.authors,
+        navCategories: ui.nav.categories,
+        navSearch: ui.nav.search,
+        langToggleLabel: ui.toggleLabel,
+        langToggleAria: ui.toggleAria,
+        themeToggleAria: ui.themeLabels.aria,
+        themeLabelAuto: ui.themeLabels.auto,
+        themeLabelLight: ui.themeLabels.light,
+        themeLabelDark: ui.themeLabels.dark
       },
       pageBackgrounds.notFound
     )
   );
 
   write(
-    path.join(distDir, 'assets', 'posts.json'),
+    path.join(distDir, 'assets', `posts.${lang}.json`),
     JSON.stringify(
       publicPosts.map((post) => ({
         title: post.title,
@@ -1216,16 +1666,112 @@ function copyImages() {
   copyDirRecursive(imagesDir, path.join(distDir, 'images'));
 }
 
+function buildAutoRedirectPage() {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting...</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <p>Redirecting...</p>
+    <p><a href="/en/">English</a> · <a href="/zh/">中文</a></p>
+    <script>
+      (() => {
+        const saved = localStorage.getItem('site-lang');
+        const browser = (navigator.language || '').toLowerCase();
+        const preferred = saved === 'en' || saved === 'zh' ? saved : browser.startsWith('zh') ? 'zh' : 'en';
+        const path = window.location.pathname || '/';
+        const stripped = path.replace(/^\\/(en|zh)(?=\\/|$)/, '');
+        const clean = stripped.startsWith('/') ? stripped : '/' + stripped;
+        const target = '/' + preferred + (clean === '/' ? '/' : clean);
+        if (target !== path) {
+          window.location.replace(target + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+  </body>
+</html>`;
+}
+
+function writeRedirectIndex(relativePath, html) {
+  const file = relativePath ? path.join(distDir, relativePath, 'index.html') : path.join(distDir, 'index.html');
+  write(file, html);
+}
+
 removeDir(distDir);
 ensureDir(distDir);
 copyAssets();
 copyStatic();
 copyImages();
 
-const posts = buildPosts();
-const authorProfiles = buildAuthorProfiles();
-const authors = linkAuthors(posts, authorProfiles);
-buildSite(posts, authors);
+const languages = Object.keys(languageConfig);
+const buildCache = {};
+
+for (const lang of languages) {
+  const posts = buildPosts(lang);
+  const authorProfiles = buildAuthorProfiles(lang);
+  const authors = linkAuthors(posts, authorProfiles, lang);
+  buildSite(posts, authors, lang);
+  buildCache[lang] = { posts, authors };
+}
+
+const redirectHtml = buildAutoRedirectPage();
+const redirectPaths = [
+  '',
+  'about',
+  'authors',
+  'categories',
+  'posts',
+  'search'
+];
+
+for (const pathName of redirectPaths) {
+  writeRedirectIndex(pathName, redirectHtml);
+}
+
+const postSlugs = new Set();
+const authorSlugs = new Set();
+
+for (const entry of Object.values(buildCache)) {
+  for (const post of entry.posts || []) {
+    postSlugs.add(post.slug);
+  }
+  for (const author of entry.authors || []) {
+    authorSlugs.add(author.slug);
+  }
+}
+
+for (const slug of postSlugs) {
+  writeRedirectIndex(path.join('posts', slug), redirectHtml);
+}
+
+for (const slug of authorSlugs) {
+  writeRedirectIndex(path.join('authors', slug), redirectHtml);
+}
+
+const categorySlugs = new Set();
+const tagSlugs = new Set();
+for (const entry of Object.values(buildCache)) {
+  for (const post of entry.posts || []) {
+    categorySlugs.add(slugify(post.category) || 'category');
+    for (const tag of post.tags || []) {
+      tagSlugs.add(slugify(tag) || 'tag');
+    }
+  }
+}
+
+for (const slug of categorySlugs) {
+  writeRedirectIndex(path.join('categories', slug), redirectHtml);
+}
+
+for (const slug of tagSlugs) {
+  writeRedirectIndex(path.join('tags', slug), redirectHtml);
+}
+
+write(path.join(distDir, '404.html'), redirectHtml);
 
 const fontSource = './public/fonts';
 const fontDestination = './dist/public/fonts';
@@ -1238,4 +1784,6 @@ if (fs.existsSync(fontSource)) {
   console.log('No font copied to dist');
 }
 
-console.log(`Built ${posts.length} posts and ${authors.length} authors into dist/.`);
+const totalPosts = Object.values(buildCache).reduce((sum, entry) => sum + (entry.posts?.length || 0), 0);
+const totalAuthors = Object.values(buildCache).reduce((sum, entry) => sum + (entry.authors?.length || 0), 0);
+console.log(`Built ${totalPosts} posts and ${totalAuthors} authors into dist/.`);

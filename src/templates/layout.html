@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="{{lang}}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,17 +13,26 @@
       <div class="spinner"></div>
     </div>
     <header class="site-header">
-      <a class="brand" href="/">
+      <a class="brand" href="{{basePath}}/">
         <span class="brand-mark-wrap"><img class="brand-mark" src="/images/logo.svg" alt="MyNotes logo" /></span>
         <span>MyNotes</span>
       </a>
       <nav>
-        <a href="/">Home</a>
-        <a href="/about/">About</a>
-        <a href="/authors/">Authors</a>
-        <a href="/categories/">Category</a>
-        <a href="/search/">Search</a>
-        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换主题">Auto</button>
+        <a href="{{basePath}}/">{{navHome}}</a>
+        <a href="{{basePath}}/about/">{{navAbout}}</a>
+        <a href="{{basePath}}/authors/">{{navAuthors}}</a>
+        <a href="{{basePath}}/categories/">{{navCategories}}</a>
+        <a href="{{basePath}}/search/">{{navSearch}}</a>
+        <button id="lang-toggle" class="lang-toggle" type="button" aria-label="{{langToggleAria}}">{{langToggleLabel}}</button>
+        <button
+          id="theme-toggle"
+          class="theme-toggle"
+          type="button"
+          aria-label="{{themeToggleAria}}"
+          data-label-auto="{{themeLabelAuto}}"
+          data-label-light="{{themeLabelLight}}"
+          data-label-dark="{{themeLabelDark}}"
+        >{{themeLabelAuto}}</button>
       </nav>
     </header>
     <main class="container">{{content}}</main>
@@ -32,19 +41,66 @@
       (() => {
         const loader = document.getElementById('page-loader');
         const themeToggle = document.getElementById('theme-toggle');
+        const langToggle = document.getElementById('lang-toggle');
         let loaderTimer = null;
         const leaveDelay = 280;
+        const currentLangAttr = document.documentElement.getAttribute('lang') || 'en';
+        const currentLang = currentLangAttr.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+        const getPreferredLang = () => {
+          const saved = localStorage.getItem('site-lang');
+          if (saved === 'en' || saved === 'zh') return saved;
+          const browser = (navigator.language || '').toLowerCase();
+          return browser.startsWith('zh') ? 'zh' : 'en';
+        };
+
+        const buildLangUrl = (target) => {
+          const url = new URL(window.location.href);
+          const isFile = url.protocol === 'file:';
+
+          if (isFile) {
+            const normalized = url.pathname.replace(/\\\\/g, '/');
+            let nextPath = normalized;
+            if (/\\/dist\\/(en|zh)(?=\\/|$)/.test(normalized)) {
+              nextPath = normalized.replace(/\\/dist\\/(en|zh)(?=\\/|$)/, '/dist/' + target);
+            } else if (/\\/(en|zh)(?=\\/|$)/.test(normalized)) {
+              nextPath = normalized.replace(/\\/(en|zh)(?=\\/|$)/, '/' + target);
+            }
+            url.pathname = nextPath;
+            return url.toString();
+          }
+
+          const stripped = url.pathname.replace(/^\\/(en|zh)(?=\\/|$)/, '');
+          const clean = stripped.startsWith('/') ? stripped : '/' + stripped;
+          url.pathname = '/' + target + (clean === '/' ? '/' : clean);
+          return url.toString();
+        };
+
+        const savedLang = localStorage.getItem('site-lang');
+        if (!savedLang) {
+          const preferred = getPreferredLang();
+          if (preferred !== currentLang) {
+            window.location.replace(buildLangUrl(preferred));
+            return;
+          }
+        }
 
         const getAutoTheme = () => {
           const hour = new Date().getHours();
           return hour >= 7 && hour < 19 ? 'light' : 'dark';
         };
 
+        const themeLabels = {
+          auto: themeToggle?.dataset.labelAuto || 'Auto',
+          light: themeToggle?.dataset.labelLight || 'Light',
+          dark: themeToggle?.dataset.labelDark || 'Dark'
+        };
+
         const applyTheme = (mode) => {
           const theme = mode === 'auto' ? getAutoTheme() : mode;
           document.documentElement.setAttribute('data-theme', theme);
           if (themeToggle) {
-            themeToggle.textContent = mode === 'auto' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light';
+            themeToggle.textContent = mode === 'auto' ? themeLabels.auto : theme === 'dark' ? themeLabels.dark : themeLabels.light;
           }
           if (window.syncGiscusTheme) {
             window.syncGiscusTheme(theme);
@@ -60,6 +116,14 @@
             const next = current === 'auto' ? 'light' : current === 'light' ? 'dark' : 'auto';
             localStorage.setItem('theme-mode', next);
             applyTheme(next);
+          });
+        }
+
+        if (langToggle) {
+          langToggle.addEventListener('click', () => {
+            const next = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('site-lang', next);
+            window.location.href = buildLangUrl(next);
           });
         }
 

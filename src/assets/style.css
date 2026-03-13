@@ -170,7 +170,7 @@ code {
   height: 22px;
   display: block;
 }
-/* Top navigation and theme toggle */
+/* Top navigation, language toggle, and theme toggle */
 nav {
   display: flex;
   flex-wrap: wrap;
@@ -187,7 +187,8 @@ nav a {
   padding: 3px 10px;
   transition: color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
 }
-.theme-toggle {
+.theme-toggle,
+.lang-toggle {
   margin-left: 0;
   border: 1px solid var(--line);
   color: var(--text);
@@ -206,7 +207,8 @@ nav a:hover {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--panel) 78%, var(--accent) 22%);
 }
-.theme-toggle:hover {
+.theme-toggle:hover,
+.lang-toggle:hover {
   transform: translateY(-1px);
   background: color-mix(in srgb, var(--panel) 85%, var(--accent) 15%);
 }
@@ -604,6 +606,9 @@ nav a:hover {
 .tag-label {
   display: inline-block;
   transform: translateY(0);
+}
+.tag-label:lang(en) {
+  transform: translateY(0.5px);
 }
 .tag-label:lang(zh) {
   transform: translateY(1px);

@@ -11,6 +11,7 @@
 - 首页仅展示最新三篇文章，并提供可交互的分类 Tag 云
 - 页面切换过渡动画（轻量淡入/淡出）
 - 主题自动切换（按本地时间：白天浅色、夜间深色），并可手动切换
+- 支持中英文 i18n：浏览器中文显示中文、浏览器英文显示英文，其他语言默认英文；并支持手动切换
 - 文章支持多作者，作者名可点击跳转作者页
 - 支持文章封面图（`cover`）
 - 支持页面背景图（按页面配置/Front Matter），并随主题自动调整亮度与透明度
@@ -21,8 +22,12 @@
 ## 目录结构
 
 ```text
-content/posts/          # 文章单文件（Markdown）
-content/authors/        # 作者资料（Markdown）
+content/posts/<slug>/zh.md  # 文章（中文）
+content/posts/<slug>/en.md  # 文章（英文）
+content/authors/<slug>/zh.md # 作者资料（中文）
+content/authors/<slug>/en.md # 作者资料（英文）
+content/about/zh.md     # 关于页（中文）
+content/about/en.md     # 关于页（英文）
 content/images/         # 网站与内容图片（封面、logo、背景等）
 src/templates/          # 页面模板
 src/assets/             # 样式
@@ -31,9 +36,14 @@ scripts/build.mjs       # 静态构建脚本
 dist/                   # 构建输出（部署目录）
 ```
 
-## 新增文章（只改一个文件）
+## i18n
 
-在 `content/posts/` 新建 `xxx.md`：
+- 构建后会生成 `/en/` 与 `/zh/` 两套页面，根路径会根据浏览器语言自动跳转。
+- 页面右上角提供语言切换按钮，可手动切换并记住偏好。
+
+## 新增文章
+
+在 `content/posts/` 新建一个文件夹，并添加 `zh.md` 与 `en.md`（例如 `content/posts/hello-world/zh.md`）：
 
 ```md
 ---
@@ -65,7 +75,7 @@ summary: 摘要（可选）
 
 ## 新增作者资料
 
-在 `content/authors/` 新建 `xxx.md`：
+在 `content/authors/` 新建一个文件夹，并添加 `zh.md` 与 `en.md`（例如 `content/authors/demo-author/zh.md`）：
 
 ```md
 ---

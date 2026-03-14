@@ -1,7 +1,7 @@
 ---
 title: 写作与发布流程
 date: 2026-03-08
-author: 示例作者
+author: demo-author
 category: 技术
 tags: 写作, 部署
 cover: /images/cover-build.svg
@@ -11,7 +11,7 @@ summary: 记录这个站点的日常写作流程与部署方式。
 
 ## 写作流程
 
-先在 `content/posts` 下创建一个文件夹，并在其中准备 `zh.md` 与 `en.md`：
+先在 `content/posts` 下创建一个 `.md` 文件，填好头部字段：
 
 - `title`
 - `date`

@@ -1,12 +1,12 @@
 ---
 title: Markdown test
 date: 2026-03-12
-author: Demo Author
+author: demo-author
 category: Test
 tags: Markdown, Test
 cover: /images/cover-build.svg
 background: /images/cover-build.svg
-summary: Tests Markdown parsing and rendering.
+summary: Tests markdown parsing and rendering.
 ---
 
 # Markdown test sheet

@@ -1,17 +1,17 @@
 ---
 title: English Article Test
 date: 2026-03-10
-author: Demo Author
+author: demo-author
 category: Test
 tags: English, Test
 cover: /images/cover-hello.svg
 background: /images/cover-hello.svg
-summary: Tests English article appearance.
+summary: Tests English article appearance
 ---
 
 # Welcome to my blog
 
-What is ammonia? Ammonia is a gas with a pungent smell.
+What is ammonia? Ammonia is a gas with pungent smell.
 
 **Bold font**
 

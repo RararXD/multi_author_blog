@@ -11,6 +11,7 @@ const srcDir = path.join(root, 'src');
 const contentDir = path.join(root, 'content');
 const postsDir = path.join(contentDir, 'posts');
 const authorsDir = path.join(contentDir, 'authors');
+const aboutPath = path.join(contentDir, 'about.md');
 const imagesDir = path.join(contentDir, 'images');
 const distDir = path.join(root, 'dist');
 const pageBackgrounds = {
@@ -575,6 +576,39 @@ function buildAuthorProfiles() {
   });
 }
 
+function loadAboutPage() {
+  const fallbackBody = `你好，这里是我的个人站点。它采用纯静态方式构建，页面模板和文章内容分离，适合长期写作与托管。\n\n你只需要在 content/posts 新增一篇 Markdown 文件并执行构建即可发布。`;
+  const fallback = {
+    title: 'About',
+    subtitle: '关于我与这个站点',
+    description: 'About this personal website.',
+    background: '',
+    body: fallbackBody
+  };
+
+  if (!fs.existsSync(aboutPath)) {
+    return {
+      ...fallback,
+      bodyHtml: markdownToHtml(fallback.body)
+    };
+  }
+
+  const parsed = parseFrontMatter(read(aboutPath));
+  const title = parsed.meta.title || fallback.title;
+  const subtitle = parsed.meta.subtitle || parsed.meta.tagline || parsed.meta.description || fallback.subtitle;
+  const description = parsed.meta.description || subtitle || fallback.description;
+  const background = parsed.meta.background || parsed.meta.bg || fallback.background;
+  const body = parsed.body || fallback.body;
+
+  return {
+    title,
+    subtitle,
+    description,
+    background,
+    bodyHtml: markdownToHtml(body)
+  };
+}
+
 function linkAuthors(posts, profileList) {
   const map = new Map();
   const authors = [];
@@ -685,6 +719,7 @@ function buildSite(posts, authors) {
   const postTpl = read(path.join(srcDir, 'templates', 'post.html'));
   const year = new Date().getFullYear();
   const commentsConfig = loadCommentsConfig();
+  const aboutPage = loadAboutPage();
   const publicPosts = posts.filter((post) => !post.hidden);
   const latestPosts = publicPosts.slice(0, 3);
   const postList = latestPosts.map((post) => renderPostCard(post, true)).join('');
@@ -741,25 +776,22 @@ function buildSite(posts, authors) {
   write(path.join(distDir, 'index.html'), indexHtml);
 
   const aboutContent = `<section class="hero">
-    <h1>About</h1>
-    <p class="meta">关于我与这个站点</p>
+    <h1>${escapeHtml(aboutPage.title)}</h1>
+    ${aboutPage.subtitle ? `<p class="meta">${escapeHtml(aboutPage.subtitle)}</p>` : ''}
   </section>
-  <section>
-    <p>你好，这里是我的个人站点。它采用纯静态方式构建，页面模板和文章内容分离，适合长期写作与托管。</p>
-    <p>你只需要在 <code>content/posts</code> 新增一篇 Markdown 文件并执行构建即可发布。</p>
-  </section>`;
+  <section class="markdown-body">${aboutPage.bodyHtml}</section>`;
 
   write(
     path.join(distDir, 'about', 'index.html'),
     renderLayoutPage(
       layout,
       {
-        title: 'About | MyNotes',
-        description: 'About this personal website.',
+        title: `${escapeHtml(aboutPage.title)} | MyNotes`,
+        description: escapeHtml(aboutPage.description),
         content: aboutContent,
         year
       },
-      pageBackgrounds.about
+      aboutPage.background || pageBackgrounds.about
     )
   );
 
